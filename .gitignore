@@ -1,0 +1,60 @@
+# Arquivos compilados do Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pyd
+
+# Configurações locais
+*.env
+.env
+*.venv
+venv/
+ENV/
+env/
+
+# IDEs e editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Arquivos de log
+*.log
+
+# Banco de dados local (SQLite)
+db.sqlite3
+db.sqlite3-journal
+
+# Arquivos estáticos e de mídia gerados
+/media/
+staticfiles/
+static/
+collected_static/
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Testes
+.coverage
+htmlcov/
+.tox/
+.junit/
+
+# Docker
+*.pid
+*.seed
+*.pid.lock
+
+# MacOS / Linux
+.DS_Store
+Thumbs.db
+
+# pyenv
+.python-version
+
+# Migrations (opcional — se quiser ignorar migrações locais)
+# */migrations/
+# !*/migrations/__init__.py
