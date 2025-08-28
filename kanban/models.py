@@ -56,6 +56,7 @@ class Card(models.Model):
     etapa = models.ForeignKey(Etapa, on_delete=models.CASCADE, related_name='tickets')
     data_criacao = models.DateTimeField(auto_now_add=True)
     data_ult_modificacao = models.DateTimeField(auto_now=True)
+    pipeline = models.ForeignKey(Pipeline, on_delete=models.CASCADE, related_name='cards', blank=True, null=True)
     criado_por = models.ForeignKey(User, on_delete=models.CASCADE)
     atribuido_a = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cards_atribuidos', blank=True, null=True)
 
@@ -95,6 +96,7 @@ class Tarefa(models.Model):
     prazo = models.DateTimeField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_TAREFA, default='ABERTO')
     criado_por = models.ForeignKey(User, on_delete=models.CASCADE)
+    atribuido_a = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tarefas_atribuidas', blank=True, null=True)
 
     def __str__(self):
         return self.titulo

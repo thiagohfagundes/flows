@@ -1,0 +1,28 @@
+<!-- templates/kanban/base.html -->
+{% load static %}
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>{% block title %}Kanban{% endblock %}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial; margin: 20px; }
+      .btn { background:#fff; border:1px solid #ddd; padding:8px 12px; border-radius:10px; cursor:pointer }
+      .btn-primary { border-color:#0ea5e9 }
+      .columns { display:flex; gap:12px; align-items:flex-start; overflow-x:auto; padding-bottom:8px }
+      .column { width:300px; background:#f6f6f6; border-radius:12px; padding:10px }
+      .column h3 { margin:0 0 8px 0; display:flex; align-items:center; justify-content:space-between }
+      .cards { min-height: 40px; }
+      .card { background:#fff; border-radius:10px; padding:10px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,.06) }
+      .muted { color:#6b7280; font-size:12px }
+      form.inline { display:flex; gap:8px; align-items:center }
+      input[type="text"], textarea, select { padding:8px; border:1px solid #e5e7eb; border-radius:10px; width:100% }
+    </style>
+    {% block head %}{% endblock %}
+  </head>
+  <body>
+    {% block content %}{% endblock %}
+  </body>
+</html>
