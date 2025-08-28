@@ -26,7 +26,7 @@
 
   <!-- Board: columns -->
   <!-- DE: grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 -->
-    <div id="kanban-columns"class="flex items-start gap-4 overflow-x-auto overscroll-x-contain whitespace-nowrap p-1">
+    <div id="kanban-columns" class="flex items-start gap-4 overflow-x-auto overscroll-x-contain whitespace-nowrap p-1">
     {% for etapa in etapas %}
       <section class="inline-flex w-[340px] min-w-[340px] max-w-[340px] shrink-0 snap-start flex-col rounded-lg border border-gray-200 bg-white">
         <!-- Column header -->
@@ -53,13 +53,6 @@
             {% include "kanban/partials/card.html" with card=card %}
           {% endfor %}
         </div>
-
-        {# placeholder "sem cards" fora do container, para podermos removê-lo via OOB #}
-        {% with etapa.tickets.all|length as cnt %}
-          {% if cnt == 0 %}
-            <p id="empty-{{ etapa.id }}" class="px-4 pb-3 text-xs text-gray-400">sem cards</p>
-          {% endif %}
-        {% endwith %}
 
         <!-- Add quick card -->
         <form class="border-t border-gray-100 p-3"
@@ -209,5 +202,6 @@ function wireDnD() {
 }
 wireDnD();
 document.body.addEventListener('htmx:afterSwap', wireDnD);
+
 </script>
 {% endblock %}

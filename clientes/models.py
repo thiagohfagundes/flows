@@ -10,13 +10,21 @@ TIPO_CLIENTE = (
 
 class Pessoa(models.Model):
     nome = models.CharField(max_length=100)
-    email = models.EmailField()
+    email = models.EmailField(null=True, blank=True)       # pode usar o do User
     cargo = models.CharField(max_length=100, blank=True, null=True)
     telefone = models.CharField(max_length=20, blank=True, null=True)
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='pessoa')
 
+    # 👇 complementos
+    biografia = models.TextField(blank=True, null=True)
+    data_nascimento = models.DateField(null=True, blank=True)
+    cidade = models.CharField(max_length=100, null=True, blank=True)
+    linkedin_url = models.URLField(null=True, blank=True)
+    website_url = models.URLField(null=True, blank=True)
+    recebe_emails = models.BooleanField(default=True)
+
     def __str__(self):
-        return self.nome
+        return self.nome or self.usuario.get_username()
 
 class Empresa(models.Model):
     nome = models.CharField(max_length=100, null=True, blank=True)

@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% block title %}Meu perfil{% endblock %}
+
+{% block content %}
+<div class="container px-4 py-8">
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-gray-900">Meu perfil</h1>
+    <p class="text-gray-500">Gerencie suas informações pessoais e preferências.</p>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-3">
+    <!-- Coluna esquerda: cartão do usuário -->
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <div class="flex items-center gap-4">
+          <div>
+            <h2 class="text-xl font-medium text-gray-900">
+              {{ pessoa.nome|default:request.user.get_username }}
+            </h2>
+            <p class="text-gray-500 text-sm">{{ request.user.email }}</p>
+            {% if pessoa.cargo %}
+              <span class="inline-flex mt-1 items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700">
+                {{ pessoa.cargo }}
+              </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <dl class="mt-6 space-y-2 text-sm">
+          {% if pessoa.telefone %}
+          <div class="flex justify-between">
+            <dt class="text-gray-500">Telefone</dt>
+            <dd class="text-gray-900">{{ pessoa.telefone }}</dd>
+          </div>
+          {% endif %}
+          {% if pessoa.cidade %}
+          <div class="flex justify-between">
+            <dt class="text-gray-500">Cidade</dt>
+            <dd class="text-gray-900">{{ pessoa.cidade }}</dd>
+          </div>
+          {% endif %}
+        </dl>
+
+        <div class="mt-4 flex gap-3">
+          {% if pessoa.linkedin_url %}
+            <a href="{{ pessoa.linkedin_url }}" target="_blank" class="text-sm text-blue-600 hover:underline">LinkedIn</a>
+          {% endif %}
+          {% if pessoa.website_url %}
+            <a href="{{ pessoa.website_url }}" target="_blank" class="text-sm text-blue-600 hover:underline">Website</a>
+          {% endif %}
+        </div>
+
+        {% if pessoa.bio %}
+        <div class="mt-6">
+          <h3 class="text-sm font-medium text-gray-700 mb-1">Bio</h3>
+          <p class="text-gray-600 text-sm">{{ pessoa.bio }}</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Minhas empresas -->
+      <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-semibold text-gray-900">Minhas empresas</h3>
+          <button data-modal-target="nova-empresa" data-modal-toggle="nova-empresa"
+                  class="text-sm px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50">Nova</button>
+        </div>
+        <ul class="divide-y divide-gray-100">
+          {% for e in minhas_empresas %}
+          <li class="py-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="font-medium text-gray-900">{{ e.nome }}</p>
+                <p class="text-xs text-gray-500">{{ e.get_tipo_display }}{% if e.cidade %} • {{ e.cidade }}{% endif %}</p>
+              </div>
+              <span class="text-xs text-gray-400">Atualizado {{ e.data_ult_mudanca|date:"d/m/Y" }}</span>
+            </div>
+          </li>
+          {% empty %}
+          <li class="py-3 text-sm text-gray-500">Nenhuma empresa vinculada ainda.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Coluna direita: formulário com abas -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="tabs"
+            data-tabs-toggle="#tab-content" role="tablist">
+          <li class="me-2" role="presentation">
+            <button class="inline-block p-3 border-b-2 rounded-t-lg" id="tab-perfil"
+                    data-tabs-target="#perfil-tab" type="button" role="tab"
+                    aria-controls="perfil-tab" aria-selected="true">
+              Dados pessoais
+            </button>
+          </li>
+          <li class="me-2" role="presentation">
+            <button class="inline-block p-3 border-b-2 rounded-t-lg" id="tab-preferencias"
+                    data-tabs-target="#preferencias-tab" type="button" role="tab"
+                    aria-controls="preferencias-tab" aria-selected="false">
+              Preferências
+            </button>
+          </li>
+        </ul>
+
+        <div id="tab-content" class="mt-4">
+          <!-- Tab Perfil -->
+          <div id="perfil-tab" role="tabpanel" aria-labelledby="tab-perfil">
+            <form method="post" class="grid gap-4 md:grid-cols-2">
+              {% csrf_token %}
+              <input type="hidden" name="which" value="perfil">
+
+              <!-- User -->
+              <div>
+                <label class="block mb-2 text-sm font-medium text-gray-900">Nome</label>
+                <input name="first_name" value="{{ request.user.first_name }}"
+                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5" />
+              </div>
+              <div>
+                <label class="block mb-2 text-sm font-medium text-gray-900">Sobrenome</label>
+                <input name="last_name" value="{{ request.user.last_name }}"
+                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5" />
+              </div>
+              <div class="md:col-span-2">
+                <label class="block mb-2 text-sm font-medium text-gray-900">E-mail</label>
+                <input name="email" type="email" value="{{ request.user.email }}"
+                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5" />
+              </div>
+
+              <!-- Pessoa -->
+              <div>
+                <label class="block mb-2 text-sm font-medium text-gray-900">Nome a exibir</label>
+                <input name="nome" value="{{ pessoa.nome|default_if_none:'' }}"
+                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5" />
+              </div>
+              <div>
+                <label class="block mb-2 text-sm font-medium text-gray-900">Cargo</label>
+                <input name="cargo" value="{{ pessoa.cargo|default_if_none:'' }}"
+                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5" />
+              </div>
+              <div>
+                <label class="block mb-2 text-sm font-medium text-gray-900">Telefone</label>
+                <input name="telefone" value="{{ pessoa.telefone|default_if_none:'' }}"
+                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5" />
+              </div>
+              <div>
+                <label class="block mb-2 text-sm font-medium text-gray-900">Cidade</label>
+                <input name="cidade" value="{{ pessoa.cidade|default_if_none:'' }}"
+                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5" />
+              </div>
+              <div class="md:col-span-2">
+                <label class="block mb-2 text-sm font-medium text-gray-900">LinkedIn (URL)</label>
+                <input name="linkedin_url" type="url" value="{{ pessoa.linkedin_url|default_if_none:'' }}"
+                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5" />
+              </div>
+              <div class="md:col-span-2">
+                <label class="block mb-2 text-sm font-medium text-gray-900">Website (URL)</label>
+                <input name="website_url" type="url" value="{{ pessoa.website_url|default_if_none:'' }}"
+                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5" />
+              </div>
+              <div class="md:col-span-2">
+                <label class="block mb-2 text-sm font-medium text-gray-900">Bio</label>
+                <textarea name="bio" rows="4"
+                          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5">{{ pessoa.bio|default_if_none:'' }}</textarea>
+              </div>
+
+              <div class="md:col-span-2 flex justify-end gap-3 mt-2">
+                <button type="submit" class="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800">Salvar</button>
+                <a href="{% url 'logout' %}" class="px-4 py-2 rounded-lg border">Sair</a>
+              </div>
+            </form>
+          </div>
+
+          <!-- Tab Preferências -->
+          <div id="preferencias-tab" class="hidden" role="tabpanel" aria-labelledby="tab-preferencias">
+            <form method="post" class="grid gap-4 md:grid-cols-2">
+              {% csrf_token %}
+              <input type="hidden" name="which" value="perfil">
+
+              <div class="md:col-span-2">
+                <label class="inline-flex items-center cursor-pointer">
+                  <input type="checkbox" name="recebe_emails" value="on"
+                         {% if pessoa.recebe_emails %}checked{% endif %}
+                         class="w-4 h-4 text-gray-900 bg-gray-100 border-gray-300 rounded focus:ring-gray-900">
+                  <span class="ms-3 text-sm font-medium text-gray-900">
+                    Receber comunicações por e-mail
+                  </span>
+                </label>
+              </div>
+
+              <div class="md:col-span-2 flex justify-end">
+                <button class="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800">
+                  Atualizar preferências
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Nova Empresa -->
+  <div id="nova-empresa" tabindex="-1" aria-hidden="true"
+       class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-md max-h-full">
+      <div class="relative bg-white rounded-2xl shadow">
+        <div class="flex items-center justify-between p-4 border-b rounded-t">
+          <h3 class="text-lg font-semibold">Nova empresa</h3>
+          <button type="button" class="text-gray-400 hover:text-gray-900" data-modal-hide="nova-empresa">✕</button>
+        </div>
+        <form method="post" class="p-4">
+          {% csrf_token %}
+          <input type="hidden" name="which" value="empresa">
+          <div class="space-y-3">
+            {{ empresa_form.as_p }}
+          </div>
+          <div class="mt-4 flex justify-end gap-3">
+            <button type="button" class="px-3 py-2 rounded-lg border" data-modal-hide="nova-empresa">Cancelar</button>
+            <button class="px-3 py-2 rounded-lg bg-gray-900 text-white">Criar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

@@ -11,8 +11,6 @@
        id="etapa-{{ etapa.id }}" data-stage-id="{{ etapa.id }}">
     {% for card in etapa.tickets.all|dictsortreversed:"data_criacao" %}
       {% include "kanban/partials/card.html" with card=card %}
-    {% empty %}
-      <p id="empty-{{ etapa.id }}" class="text-xs text-gray-400">sem cards</p>
     {% endfor %}
   </div>
 

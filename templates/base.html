@@ -34,8 +34,8 @@
               <span class="sr-only">Abrir menu</span>
               <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2 4.5A.5.5 0 012.5 4h15a.5.5 0 010 1h-15a.5.5 0 01-.5-.5zm0 5A.5.5 0 012.5 9h15a.5.5 0 010 1h-15a.5.5 0 01-.5-.5zm0 5a.5.5 0 01.5-.5h15a.5.5 0 010 1h-15a.5.5 0 01-.5-.5z" clip-rule="evenodd"></path></svg>
             </button>
-            <a href="/" class="flex ml-2 md:mr-24">
-              <span class="self-center text-xl font-semibold whitespace-nowrap">Kanban</span>
+            <a href="{% url 'kanban:pipelines' %}" class="flex ml-2 md:mr-24">
+              <span class="self-center text-xl font-semibold whitespace-nowrap">Superlógica Flows</span>
             </a>
           </div>
 
@@ -57,7 +57,7 @@
                   <span class="block text-sm font-medium text-gray-500 truncate">{{ user.email }}</span>
                 </div>
                 <ul class="py-1" aria-labelledby="user-menu-button">
-                  <li><a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Perfil</a></li>
+                  <li><a href="{% url 'perfil' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Perfil</a></li>
                   <li><a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sair</a></li>
                 </ul>
               </div>
@@ -72,9 +72,9 @@
       <div class="h-full px-3 pb-4 overflow-y-auto bg-white">
         <ul class="space-y-2 font-medium">
           <li>
-            <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
+            <a href="{% url 'kanban:pipelines' %}" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
               <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-              <span class="ml-3">Quadros</span>
+              <span class="ml-3">Processos</span>
             </a>
           </li>
           <li>
@@ -103,6 +103,13 @@
     <main class="p-4 lg:ml-64 pt-20">
       {% block content %}{% endblock %}
     </main>
+
+    <script>
+      document.addEventListener("htmx:configRequest", (event) => {
+        const token = "{{ csrf_token }}";
+        if (token) event.detail.headers["X-CSRFToken"] = token;
+      });
+    </script>
 
   </body>
 </html>

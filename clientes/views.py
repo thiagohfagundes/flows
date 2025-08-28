@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 def login_view(request):
@@ -37,3 +38,43 @@ def register_view(request):
             return redirect("/kanban/pipelines/")
 
     return render(request, "auth/register.html")
+
+from .forms import UserForm, PessoaForm, EmpresaQuickForm
+from .models import Empresa
+
+@login_required
+def perfil(request):
+    pessoa = request.user.pessoa  # graças ao OneToOneField
+    user_form = UserForm(instance=request.user)
+    pessoa_form = PessoaForm(instance=pessoa)
+    empresa_form = EmpresaQuickForm()
+
+    if request.method == "POST":
+        which = request.POST.get("which", "perfil")
+        if which == "perfil":
+            user_form = UserForm(request.POST, instance=request.user)
+            pessoa_form = PessoaForm(request.POST, request.FILES, instance=pessoa)
+            if user_form.is_valid() and pessoa_form.is_valid():
+                user_form.save()
+                pessoa_form.save()
+                messages.success(request, "Perfil atualizado com sucesso!")
+                return redirect("perfil")
+        elif which == "empresa":
+            empresa_form = EmpresaQuickForm(request.POST)
+            if empresa_form.is_valid():
+                emp = empresa_form.save(commit=False)
+                emp.criado_por = request.user
+                emp.responsavel = pessoa
+                emp.save()
+                emp.colaboradores.add(pessoa)
+                messages.success(request, "Empresa criada e vinculada!")
+                return redirect("perfil")
+
+    minhas_empresas = Empresa.objects.filter(colaboradores=pessoa).order_by("-data_ult_modificacao")[:8]
+    return render(request, "clientes/perfil.html", {
+        "user_form": user_form,
+        "pessoa_form": pessoa_form,
+        "empresa_form": empresa_form,
+        "pessoa": pessoa,
+        "minhas_empresas": minhas_empresas,
+    })

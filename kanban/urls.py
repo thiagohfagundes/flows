@@ -7,7 +7,7 @@ app_name = "kanban"
 urlpatterns = [
     # navegação principal
     path("", views.home, name="home"),
-    path("pipelines/", views.pipeline_list, name="pipeline_list"),
+    path("pipelines/", views.pipeline_list, name="pipelines"),
     path("pipelines/<int:pipeline_id>/", views.pipeline_detail, name="pipeline_detail"),
     path("pipelines/criar/stage-row/", views.pipeline_create_stage_row, name="pipeline_create_stage_row"),
     path("pipelines/criar/", views.pipeline_create, name="pipeline_create"),  # <--- NOVA
@@ -16,6 +16,8 @@ urlpatterns = [
     # etapas (criar/editar rápido pela UI)
     path("pipelines/<int:pipeline_id>/etapas/new/", views.etapa_create, name="etapa_create"),
     path("etapas/<int:etapa_id>/edit/", views.etapa_edit, name="etapa_edit"),
+    path("pipelines/<int:pk>/editar/", views.pipeline_edit, name="pipeline_edit"),
+    path("pipelines/<int:pk>/excluir/", views.pipeline_delete, name="pipeline_delete"),
 
     # cards (CRUD rápido + mover)
     path("pipelines/<int:pipeline_id>/cards/new/", views.card_create, name="card_create"),

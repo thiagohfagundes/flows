@@ -5,7 +5,8 @@ from django.views.decorators.http import require_http_methods
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-
+from django.contrib import messages
+from .forms import PipelineForm
 from .models import Pipeline, Etapa, Card, Tarefa, STATUS_TAREFA, STATUS_ETAPA
 
 def home(request):
@@ -84,10 +85,12 @@ def pipeline_create(request):
     return render(request, "kanban/criar_pipeline.html", context)
 
 @login_required
-def pipeline_delete(request, pipeline_id):
-    pipeline = get_object_or_404(Pipeline, id=pipeline_id, criado_por=request.user)
+@require_http_methods(["POST"])
+def pipeline_delete(request, pk):
+    pipeline = get_object_or_404(Pipeline, pk=pk, criado_por=request.user)  # filtre por dono se quiser
     pipeline.delete()
-    return HttpResponse(status=204)
+    # Como hx-swap="outerHTML" e target é a <tr>, devolver vazio remove a linha
+    return HttpResponse("")  # 200 OK com corpo vazio
 
 @login_required
 def pipeline_detail(request, pipeline_id):
@@ -95,6 +98,30 @@ def pipeline_detail(request, pipeline_id):
     etapas = pipeline.etapas.order_by("posicao").prefetch_related("tarefas", "tickets")
     # tickets = related_name em Card(etapa=...) é "tickets", então usamos isso.
     return render(request, "kanban/pipeline_detail.html", {"pipeline": pipeline, "etapas": etapas})
+
+@login_required
+def pipeline_edit(request, pk):
+    # se você tiver o campo criado_por, mantenha o filtro para garantir propriedade
+    filtro = {"pk": pk}
+    if hasattr(Pipeline, "criado_por"):
+        filtro["criado_por"] = request.user
+
+    pipeline = get_object_or_404(Pipeline, **filtro)
+
+    if request.method == "POST":
+        form = PipelineForm(request.POST, instance=pipeline)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Pipeline atualizado com sucesso.")
+            return redirect("kanban:pipeline_detail", pk=pipeline.pk)
+    else:
+        form = PipelineForm(instance=pipeline)
+
+    return render(request, "kanban/pipeline_form.html", {
+        "form": form,
+        "pipeline": pipeline,
+        "is_edit": True,
+    })
 
 # -------------------------
 # ETAPAS
