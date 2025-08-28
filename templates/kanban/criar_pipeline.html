@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Criar pipeline{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-5xl px-4 py-8">
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-gray-900">Criar pipeline</h1>
+    <p class="text-sm text-gray-500">Defina os requisitos e organize as etapas. Arraste as linhas para reordenar.</p>
+  </div>
+
+  {% if erro %}
+    <div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+      <p class="font-medium">Erro ao salvar</p>
+      <p class="text-sm">{{ erro }}</p>
+    </div>
+  {% endif %}
+
+  <form method="post" class="space-y-6">
+    {% csrf_token %}
+
+    <!-- REQUISITOS -->
+    <section class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 class="mb-4 text-base font-semibold text-gray-900">Requisitos</h2>
+      <label class="block text-sm font-medium text-gray-900">Nome *</label>
+      <input type="text" name="nome" value="{{ nome|default:'' }}" required
+             class="mt-1 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500">
+    </section>
+
+    <!-- EXTRAS + ETAPAS INLINE -->
+    <section class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 class="mb-4 text-base font-semibold text-gray-900">Extras</h2>
+
+      <label class="block text-sm font-medium text-gray-900">Descrição</label>
+      <textarea name="descricao" rows="4"
+                class="mt-1 mb-6 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500">{{ descricao|default:'' }}</textarea>
+
+      <div class="mb-3 flex items-end justify-between">
+        <div>
+          <h3 class="text-sm font-medium text-gray-900">Etapas do pipeline</h3>
+          <p class="text-xs text-gray-500">Arraste as linhas — a ordem define a posição.</p>
+        </div>
+        <button type="button"
+                hx-get="{% url 'kanban:pipeline_create_stage_row' %}"
+                hx-target="#etapas-tbody"
+                hx-swap="beforeend"
+                class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          + adicionar etapa
+        </button>
+      </div>
+
+      <!-- TABELA STYLE FLOWBITE -->
+      <div class="overflow-hidden rounded-lg border border-gray-200">
+        <table class="w-full text-left text-sm text-gray-700">
+          <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+            <tr>
+              <th class="w-10 px-3 py-3"></th>            <!-- handle -->
+              <th class="px-3 py-3">Etapa</th>            <!-- label estático -->
+              <th class="w-2/3 px-3 py-3">Nome da etapa *</th>
+              <th class="w-48 px-3 py-3">Status</th>
+              <th class="w-28 px-3 py-3 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="etapas-tbody" class="divide-y divide-gray-100">
+            {% if posted_rows %}
+              {% for nome,status in posted_rows %}
+                {% include "kanban/partials/pipeline_stage_row.html" with preset_nome=nome preset_status=status %}
+              {% endfor %}
+            {% else %}
+              {% for s in defaults %}
+                {% include "kanban/partials/pipeline_stage_row.html" with preset_nome=s.nome preset_status=s.status %}
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="flex items-center justify-between">
+      <a href="{% url 'kanban:pipeline_list' %}" class="text-sm font-medium text-gray-600 hover:text-gray-800">Voltar</a>
+      <button type="submit"
+              class="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300">
+        Criar
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- SortableJS: ordenar tbody -->
+<script>
+  function initSortableRows() {
+    const tbody = document.getElementById('etapas-tbody');
+    if (!tbody || tbody._sortable) return;
+    tbody._sortable = new Sortable(tbody, {
+      handle: '.drag-handle',
+      animation: 150,
+      ghostClass: 'bg-yellow-50',
+    });
+  }
+  initSortableRows();
+
+  // quando adicionar nova linha via htmx
+  document.body.addEventListener('htmx:afterSwap', function (e) {
+    if (e.detail?.target?.id === 'etapas-tbody') initSortableRows();
+  });
+</script>
+{% endblock %}
+

@@ -9,6 +9,9 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("pipelines/", views.pipeline_list, name="pipeline_list"),
     path("pipelines/<int:pipeline_id>/", views.pipeline_detail, name="pipeline_detail"),
+    path("pipelines/criar/stage-row/", views.pipeline_create_stage_row, name="pipeline_create_stage_row"),
+    path("pipelines/criar/", views.pipeline_create, name="pipeline_create"),  # <--- NOVA
+    path("pipelines/<int:pipeline_id>/delete/", views.pipeline_delete, name="pipeline_delete"),
 
     # etapas (criar/editar rápido pela UI)
     path("pipelines/<int:pipeline_id>/etapas/new/", views.etapa_create, name="etapa_create"),
@@ -19,6 +22,7 @@ urlpatterns = [
     path("cards/<int:card_id>/edit/", views.card_edit, name="card_edit"),
     path("cards/<int:card_id>/delete/", views.card_delete, name="card_delete"),
     path("cards/<int:card_id>/move/", views.card_move, name="card_move"),
+    path("cards/<int:card_id>/", views.card_detail, name="card_detail"),
 
     # tarefas (extra opcional)
     path("cards/<int:card_id>/tarefas/new/", views.tarefa_create, name="tarefa_create"),

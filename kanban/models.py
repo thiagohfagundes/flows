@@ -67,6 +67,12 @@ class Card(models.Model):
         self.etapa = nova_etapa
         self.save()
 
+    def tarefas_total(self):
+        return self.tarefas.count()
+
+    def tarefas_concluidas(self):
+        return self.tarefas.filter(concluido=True).count()
+
 class Categoria(models.Model):
     nome = models.CharField(max_length=100)
     descricao = models.TextField(blank=True, null=True)

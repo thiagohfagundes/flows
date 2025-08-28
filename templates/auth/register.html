@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Registrar</title>
+  <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet" />
+</head>
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+
+  <div class="w-full max-w-sm p-6 bg-white rounded-2xl shadow-md">
+    <h1 class="text-2xl font-bold text-center mb-6">Criar Conta</h1>
+
+    <!-- Alerts Django Messages -->
+    {% if messages %}
+      <div class="space-y-2 mb-4">
+        {% for message in messages %}
+          <div id="alert-{{ forloop.counter }}"
+               class="flex items-center p-4 text-sm 
+                      {% if message.tags == 'error' %}text-red-800 bg-red-100 rounded-lg
+                      {% elif message.tags == 'success' %}text-green-800 bg-green-100 rounded-lg
+                      {% else %}text-blue-800 bg-blue-100 rounded-lg{% endif %}"
+               role="alert">
+            <span class="sr-only">Info</span>
+            <div>
+              {{ message }}
+            </div>
+            <button type="button" 
+                    class="ml-auto -mx-1.5 -my-1.5 bg-transparent text-gray-400 hover:text-gray-900 
+                           rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 inline-flex items-center justify-center h-8 w-8"
+                    data-dismiss-target="#alert-{{ forloop.counter }}" aria-label="Close">
+              <span class="sr-only">Close</span>
+              ✖
+            </button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Formulário -->
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+
+      <div>
+        <label class="block mb-2 text-sm font-medium text-gray-900">Usuário</label>
+        <input type="text" name="username" required
+               class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500
+                      focus:border-blue-500 block w-full p-2.5" />
+      </div>
+
+      <div>
+        <label class="block mb-2 text-sm font-medium text-gray-900">E-mail</label>
+        <input type="email" name="email" required
+               class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500
+                      focus:border-blue-500 block w-full p-2.5" />
+      </div>
+
+      <div>
+        <label class="block mb-2 text-sm font-medium text-gray-900">Senha</label>
+        <input type="password" name="password" required
+               class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500
+                      focus:border-blue-500 block w-full p-2.5" />
+      </div>
+
+      <button type="submit"
+              class="w-full text-white bg-green-600 hover:bg-green-700 font-medium rounded-lg text-sm px-5 py-2.5">
+        Registrar
+      </button>
+    </form>
+
+    <p class="mt-4 text-sm text-center text-gray-600">
+      Já tem conta? <a href="{% url 'login' %}" class="text-blue-600 hover:underline">Entrar</a>
+    </p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+</body>
+</html>

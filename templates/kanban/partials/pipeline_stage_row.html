@@ -1,0 +1,43 @@
+<tr class="bg-white">
+  <!-- handle -->
+  <td class="px-3 py-3 align-middle">
+    <button type="button" class="drag-handle inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 text-gray-500 hover:bg-gray-50" title="Arrastar">
+      <!-- ícone “grip” -->
+      <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M7 4h2v2H7V4zm4 0h2v2h-2V4zM7 9h2v2H7V9zm4 0h2v2h-2V9zM7 14h2v2H7v-2zm4 0h2v2h-2v-2z"/>
+      </svg>
+    </button>
+  </td>
+
+  <!-- label “Etapa” para lembrar o usuário -->
+  <td class="px-3 py-3 align-middle">
+    <span class="text-xs text-gray-500">Etapa</span>
+  </td>
+
+  <!-- nome -->
+  <td class="px-3 py-3 align-middle">
+    <input type="text" name="etapas-nome" value="{{ preset_nome|default:'' }}" required
+           class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
+           placeholder="ex.: Contato inicial">
+  </td>
+
+  <!-- status -->
+  <td class="px-3 py-3 align-middle">
+    <select name="etapas-status"
+            class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500">
+      {% for value,label in statuses %}
+        <option value="{{ value }}" {% if preset_status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </td>
+
+  <!-- actions -->
+  <td class="px-3 py-3 align-middle text-right">
+    <button type="button"
+            class="text-sm font-medium text-red-600 hover:underline"
+            onclick="this.closest('tr').remove()">
+      Remover
+    </button>
+  </td>
+</tr>
+<!-- fim da linha da etapa -->

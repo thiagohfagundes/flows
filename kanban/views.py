@@ -6,7 +6,7 @@ from django.db import transaction
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 
-from .models import Pipeline, Etapa, Card, Tarefa, STATUS_TAREFA
+from .models import Pipeline, Etapa, Card, Tarefa, STATUS_TAREFA, STATUS_ETAPA
 
 def home(request):
     return render(request, "kanban/home.html")
@@ -19,6 +19,75 @@ def home(request):
 def pipeline_list(request):
     pipelines = Pipeline.objects.filter(criado_por=request.user).order_by("-data_criacao")
     return render(request, "kanban/pipeline_list.html", {"pipelines": pipelines})
+
+# sugestões iniciais (ajuste os nomes se quiser)
+DEFAULT_STAGE_SUGGESTIONS = [
+    {"nome": "Contato inicial", "status": "ABERTO"},
+    {"nome": "Qualificação",    "status": "ABERTO"},
+    {"nome": "Em execução",     "status": "ABERTO"},
+    {"nome": "Concluído",       "status": "CONCLUIDO"},
+]
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def pipeline_create(request):
+    """
+    Cria pipeline. A ordem das etapas vem da ordem dos campos no form (SortableJS).
+    Não exibimos 'posicao' — calculamos como 10, 20, 30…
+    """
+    context = {
+        "statuses": STATUS_ETAPA,
+        "defaults": DEFAULT_STAGE_SUGGESTIONS,
+    }
+
+    if request.method == "POST":
+        nome = (request.POST.get("nome") or "").strip()
+        if not nome:
+            context.update({"erro": "Nome é obrigatório.", "nome": nome})
+            # mantém valores já digitados para não perder o que o usuário fez
+            context["posted_rows"] = list(zip(
+                request.POST.getlist("etapas-nome"),
+                request.POST.getlist("etapas-status"),
+            ))
+            return render(request, "kanban/pipeline_create.html", context)
+
+        with transaction.atomic():
+            pipeline = Pipeline.objects.create(
+                nome=nome,
+                descricao=(request.POST.get("descricao") or "").strip() or None,
+                criado_por=request.user,
+            )
+
+            # Etapas em ordem: o browser envia na ordem atual do DOM
+            nomes  = request.POST.getlist("etapas-nome")
+            stats  = request.POST.getlist("etapas-status")
+
+            pos = 10
+            for i, n in enumerate(nomes):
+                n = (n or "").strip()
+                if not n:
+                    continue
+                status_i = stats[i] if i < len(stats) and stats[i] else "ABERTO"
+
+                etapa = Etapa.objects.create(
+                    nome=n,
+                    posicao=pos,
+                    status=status_i,
+                    criado_por=request.user,
+                )
+                pipeline.etapas.add(etapa)
+                pos += 10
+
+        return redirect("kanban:pipeline_detail", pipeline_id=pipeline.id)
+
+    # GET
+    return render(request, "kanban/criar_pipeline.html", context)
+
+@login_required
+def pipeline_delete(request, pipeline_id):
+    pipeline = get_object_or_404(Pipeline, id=pipeline_id, criado_por=request.user)
+    pipeline.delete()
+    return HttpResponse(status=204)
 
 @login_required
 def pipeline_detail(request, pipeline_id):
@@ -75,9 +144,27 @@ def etapa_edit(request, etapa_id):
     # devolve o header atualizado da coluna para swap inline
     return render(request, "kanban/partials/coluna_header.html", {"etapa": etapa})
 
+
+@login_required
+def pipeline_create_stage_row(request):
+    return render(request, "kanban/partials/pipeline_stage_row.html", {"statuses": STATUS_ETAPA})
+
 # -------------------------
 # CARDS
 # -------------------------
+
+@login_required
+def card_detail(request, card_id):
+    card = get_object_or_404(
+        Card.objects.select_related("etapa", "pipeline", "criado_por")
+            .prefetch_related("tarefas"),
+        id=card_id
+    )
+    # counts para progresso
+    total = card.tarefas.count()
+    done = card.tarefas.filter(concluido=True).count()
+    ctx = {"card": card, "total": total, "done": done}
+    return render(request, "kanban/partials/card_drawer.html", ctx)
 
 @login_required
 @require_http_methods(["POST"])

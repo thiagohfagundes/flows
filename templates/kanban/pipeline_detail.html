@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block title %}{{ pipeline.nome }}{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-900">{{ pipeline.nome }}</h1>
+      {% if pipeline.descricao %}<p class="text-sm text-gray-500">{{ pipeline.descricao }}</p>{% endif %}
+    </div>
+
+    <div class="flex items-center gap-2">
+      <!-- Add column -->
+      <button data-modal-target="modal-add-stage" data-modal-toggle="modal-add-stage"
+              class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+        + etapa
+      </button>
+      <!-- Add card (abre modal pedindo etapa e título) -->
+      <button data-modal-target="modal-add-card" data-modal-toggle="modal-add-card"
+              class="inline-flex items-center rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50">
+        + card
+      </button>
+    </div>
+  </div>
+
+  <!-- Board: columns -->
+  <!-- DE: grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 -->
+    <div id="kanban-columns"class="flex items-start gap-4 overflow-x-auto overscroll-x-contain whitespace-nowrap p-1">
+    {% for etapa in etapas %}
+      <section class="inline-flex w-[340px] min-w-[340px] max-w-[340px] shrink-0 snap-start flex-col rounded-lg border border-gray-200 bg-white">
+        <!-- Column header -->
+        <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex h-2 w-2 rounded-full bg-gray-400"></span>
+            <h3 class="text-sm font-medium text-gray-900">{{ etapa.nome }}</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="text-xs text-gray-500 hover:text-gray-700"
+                    hx-post="{% url 'kanban:etapa_edit' etapa.id %}"
+                    hx-vals='{"nome":"{{ etapa.nome|escapejs }}"}'
+                    hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+                    hx-target="closest section"
+                    hx-swap="outerHTML">
+              editar
+            </button>
+          </div>
+        </div>
+
+        <!-- Cards list -->
+        <div class="cards flex-1 space-y-3 p-4 overflow-y-auto" style="max-height: calc(100vh - 260px);" id="etapa-{{ etapa.id }}" data-stage-id="{{ etapa.id }}">
+          {% for card in etapa.tickets.all|dictsortreversed:"data_criacao" %}
+            {% include "kanban/partials/card.html" with card=card %}
+          {% endfor %}
+        </div>
+
+        {# placeholder "sem cards" fora do container, para podermos removê-lo via OOB #}
+        {% with etapa.tickets.all|length as cnt %}
+          {% if cnt == 0 %}
+            <p id="empty-{{ etapa.id }}" class="px-4 pb-3 text-xs text-gray-400">sem cards</p>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Add quick card -->
+        <form class="border-t border-gray-100 p-3"
+              hx-post="{% url 'kanban:card_create' pipeline.id %}"
+              hx-target="#etapa-{{ etapa.id }}" hx-swap="beforeend">
+          {% csrf_token %}
+          <input type="hidden" name="etapa_id" value="{{ etapa.id }}">
+          <div class="flex items-center gap-2">
+            <input type="text" name="titulo" placeholder="novo card..."
+                  class="block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+            <button type="submit"
+                    class="rounded-md bg-gray-100 px-3 py-2 text-xs text-gray-700 hover:bg-gray-200">adicionar</button>
+          </div>
+        </form>
+      </section>
+    {% empty %}
+      <div class="text-sm text-gray-500">Este pipeline ainda não tem etapas.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Modal: add stage -->
+<div id="modal-add-stage" tabindex="-1" aria-hidden="true"
+     class="hidden fixed inset-0 z-50 items-center justify-center bg-black/30">
+  <div class="relative w-full max-w-md p-4">
+    <div class="rounded-lg bg-white shadow">
+      <div class="flex items-center justify-between border-b p-4">
+        <h3 class="text-base font-semibold text-gray-900">nova etapa</h3>
+        <button data-modal-hide="modal-add-stage" class="text-gray-400 hover:text-gray-600">✕</button>
+      </div>
+      <form class="p-4"
+            hx-post="{% url 'kanban:etapa_create' pipeline.id %}"
+            hx-target="#kanban-columns" hx-swap="beforeend"
+            onsubmit="document.querySelector('[data-modal-hide=modal-add-stage]').click()">
+        {% csrf_token %}
+        <label class="block text-sm text-gray-700">nome</label>
+        <input name="nome" required
+               class="mt-1 mb-3 block w-full rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+        <label class="block text-sm text-gray-700">descrição (opcional)</label>
+        <input name="descricao"
+               class="mt-1 mb-4 block w-full rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+        <div class="flex justify-end gap-2">
+          <button type="button" data-modal-hide="modal-add-stage"
+                  class="rounded-md border border-gray-300 px-4 py-2 text-sm">cancelar</button>
+          <button type="submit"
+                  class="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">criar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: add card -->
+<div id="modal-add-card" tabindex="-1" aria-hidden="true"
+     class="hidden fixed inset-0 z-50 items-center justify-center bg-black/30">
+  <div class="relative w-full max-w-md p-4">
+    <div class="rounded-lg bg-white shadow">
+      <div class="flex items-center justify-between border-b p-4">
+        <h3 class="text-base font-semibold text-gray-900">novo card</h3>
+        <button data-modal-hide="modal-add-card" class="text-gray-400 hover:text-gray-600">✕</button>
+      </div>
+      <form class="p-4"
+            hx-post="{% url 'kanban:card_create' pipeline.id %}"
+            hx-target="#etapas-target-modal" hx-swap="beforeend"
+            onsubmit="document.querySelector('[data-modal-hide=modal-add-card]').click()">
+        {% csrf_token %}
+        <label class="block text-sm text-gray-700">etapa</label>
+        <select name="etapa_id" id="etapas-target-modal"
+                class="mt-1 mb-3 block w-full rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+          {% for etapa in etapas %}
+            <option value="{{ etapa.id }}">{{ etapa.nome }}</option>
+          {% endfor %}
+        </select>
+
+        <label class="block text-sm text-gray-700">título</label>
+        <input name="titulo" required
+               class="mt-1 mb-4 block w-full rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+
+        <div class="flex justify-end gap-2">
+          <button type="button" data-modal-hide="modal-add-card"
+                  class="rounded-md border border-gray-300 px-4 py-2 text-sm">cancelar</button>
+          <button type="submit"
+                  class="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700">criar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Drawer de detalhes do card -->
+<div id="card-drawer" class="fixed inset-0 z-50 hidden">
+  <div id="card-drawer-backdrop" class="absolute inset-0 bg-black/30" onclick="closeCardDrawer()"></div>
+
+  <aside id="card-drawer-panel"
+         class="absolute right-0 top-0 h-full w-full max-w-md transform bg-white shadow-2xl transition-transform duration-200 translate-x-full">
+    <div class="flex items-center justify-between border-b px-4 py-3">
+      <h3 class="text-base font-semibold text-gray-900">Detalhes do card</h3>
+      <button class="text-gray-400 hover:text-gray-600" onclick="closeCardDrawer()">✕</button>
+    </div>
+    <div id="card-drawer-body" class="overflow-y-auto p-4">
+      <!-- conteúdo vem via htmx -->
+    </div>
+  </aside>
+</div>
+
+<script>
+  function openCardDrawer() {
+    const wrap = document.getElementById('card-drawer');
+    const panel = document.getElementById('card-drawer-panel');
+    wrap.classList.remove('hidden');
+    requestAnimationFrame(() => panel.classList.remove('translate-x-full'));
+  }
+  function closeCardDrawer() {
+    const wrap = document.getElementById('card-drawer');
+    const panel = document.getElementById('card-drawer-panel');
+    panel.classList.add('translate-x-full');
+    setTimeout(() => wrap.classList.add('hidden'), 200);
+  }
+</script>
+
+
+<!-- Drag & drop: move card (atualiza só a etapa; se quiser ordenar dentro da coluna, adiciono 'ordem' no Card) -->
+<script>
+function wireDnD() {
+  document.querySelectorAll('.cards').forEach(listEl => {
+    if (listEl._sortableDone) return;
+    listEl._sortableDone = true;
+
+    new Sortable(listEl, {
+      group: 'kanban',
+      animation: 150,
+      onEnd: (evt) => {
+        const item = evt.item;
+        const moveUrl = item.dataset.moveUrl;                 // <- URL correta do Django
+        const newStageId = (evt.to.closest('.cards')?.dataset.stageId) || evt.to.dataset.stageId;
+
+        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        htmx.ajax('POST', moveUrl, {
+          values: { etapa_id: newStageId },
+          headers: { 'X-CSRFToken': csrf },
+          swap: 'none'
+        });
+      }
+    });
+  });
+}
+wireDnD();
+document.body.addEventListener('htmx:afterSwap', wireDnD);
+</script>
+{% endblock %}

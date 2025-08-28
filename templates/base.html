@@ -4,25 +4,106 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>{% block title %}Kanban{% endblock %}</title>
+    <!-- Tailwind (CDN dev) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Flowbite (CDN dev) -->
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
+
+    <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+    <!-- SortableJS -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <style>
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial; margin: 20px; }
-      .btn { background:#fff; border:1px solid #ddd; padding:8px 12px; border-radius:10px; cursor:pointer }
-      .btn-primary { border-color:#0ea5e9 }
-      .columns { display:flex; gap:12px; align-items:flex-start; overflow-x:auto; padding-bottom:8px }
-      .column { width:300px; background:#f6f6f6; border-radius:12px; padding:10px }
-      .column h3 { margin:0 0 8px 0; display:flex; align-items:center; justify-content:space-between }
-      .cards { min-height: 40px; }
-      .card { background:#fff; border-radius:10px; padding:10px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,.06) }
-      .muted { color:#6b7280; font-size:12px }
-      form.inline { display:flex; gap:8px; align-items:center }
-      input[type="text"], textarea, select { padding:8px; border:1px solid #e5e7eb; border-radius:10px; width:100% }
-    </style>
+
     {% block head %}{% endblock %}
   </head>
-  <body>
-    {% block content %}{% endblock %}
+  <body class="bg-gray-50">
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200">
+      <div class="px-3 py-3 lg:px-5 lg:pl-3">
+        <div class="flex items-center justify-between">
+          <!-- Left -->
+          <div class="flex items-center">
+            <!-- Sidebar toggle -->
+            <button data-drawer-target="sidebar" data-drawer-toggle="sidebar" aria-controls="sidebar" type="button" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100">
+              <span class="sr-only">Abrir menu</span>
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2 4.5A.5.5 0 012.5 4h15a.5.5 0 010 1h-15a.5.5 0 01-.5-.5zm0 5A.5.5 0 012.5 9h15a.5.5 0 010 1h-15a.5.5 0 01-.5-.5zm0 5a.5.5 0 01.5-.5h15a.5.5 0 010 1h-15a.5.5 0 01-.5-.5z" clip-rule="evenodd"></path></svg>
+            </button>
+            <a href="/" class="flex ml-2 md:mr-24">
+              <span class="self-center text-xl font-semibold whitespace-nowrap">Kanban</span>
+            </a>
+          </div>
+
+          <!-- Right -->
+          <div class="flex items-center">
+            <div class="flex items-center ml-3">
+              <!-- Dropdown do usuário -->
+              <div>
+                <button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300" id="user-menu-button" data-dropdown-toggle="user-dropdown" aria-expanded="false">
+                  <span class="sr-only">Abrir menu do usuário</span>
+                  <img class="w-8 h-8 rounded-full" src="https://ui-avatars.com/api/?name={{ user.username }}" alt="user photo">
+                </button>
+              </div>
+
+              <!-- Dropdown menu -->
+              <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded shadow" id="user-dropdown">
+                <div class="px-4 py-3">
+                  <span class="block text-sm text-gray-900">{{ user.username }}</span>
+                  <span class="block text-sm font-medium text-gray-500 truncate">{{ user.email }}</span>
+                </div>
+                <ul class="py-1" aria-labelledby="user-menu-button">
+                  <li><a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Perfil</a></li>
+                  <li><a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sair</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 lg:translate-x-0" aria-label="Sidebar">
+      <div class="h-full px-3 pb-4 overflow-y-auto bg-white">
+        <ul class="space-y-2 font-medium">
+          <li>
+            <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
+              <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+              <span class="ml-3">Quadros</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
+              <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+              <span class="ml-3">Tarefas</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
+              <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87"/></svg>
+              <span class="ml-3">Times</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100">
+              <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 17v-6h13M15 13h7"/></svg>
+              <span class="ml-3">Relatórios</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Conteúdo principal -->
+    <main class="p-4 lg:ml-64 pt-20">
+      {% block content %}{% endblock %}
+    </main>
+
   </body>
 </html>
+

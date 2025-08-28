@@ -1,0 +1,13 @@
+<!-- templates/kanban/partials/coluna_header.html -->
+<h3>
+  <span>{{ etapa.nome }}</span>
+  <small class="muted">#{{ etapa.id }}</small>
+  <button class="btn"
+          hx-post="{% url 'kanban:etapa_edit' etapa.id %}"
+          hx-vals='{"nome": "{{ etapa.nome|escapejs }}", "posicao": "{{ etapa.posicao }}"}'
+          hx-target="closest h3"
+          hx-swap="outerHTML">
+    editar
+  </button>
+</h3>
+<!-- fim do header da coluna -->
