@@ -1,8 +1,16 @@
 <!-- header simples -->
-<div class="space-y-1">
-  <h4 class="text-lg font-semibold text-gray-900">{{ card.titulo }}</h4>
-  {% if card.etapa %}<p class="text-xs text-gray-500">Etapa: {{ card.etapa.nome }}</p>{% endif %}
-  {% if card.pipeline %}<p class="text-xs text-gray-500">Pipeline: {{ card.pipeline.nome }}</p>{% endif %}
+<div class="mb-2 flex items-start justify-between">
+  <div class="space-y-1">
+    <h4 class="text-lg font-semibold text-gray-900">{{ card.titulo }}</h4>
+    {% if card.etapa %}<p class="text-xs text-gray-500">Etapa: {{ card.etapa.nome }}</p>{% endif %}
+    {% if card.pipeline %}<p class="text-xs text-gray-500">Pipeline: {{ card.pipeline.nome }}</p>{% endif %}
+  </div>
+
+  <a href="{% url 'kanban:card_detail' card.id %}"
+     class="text-sm text-blue-600 hover:underline"
+     target="_blank" rel="noopener">
+    Ver em tela cheia ↗
+  </a>
 </div>
 
 {% if card.descricao %}
@@ -53,3 +61,64 @@
     </div>
   </form>
 </div>
+
+<!-- Propriedades -->
+<div class="mt-4">
+  <h5 class="mb-2 text-sm font-medium text-gray-900">Propriedades</h5>
+
+  <form hx-post="{% url 'kanban:card_props_update' card.id %}"
+      hx-trigger="change delay:400ms from:input, change from:select"
+      hx-target="#card-drawer-body" hx-swap="none" class="space-y-3">
+
+    {% csrf_token %}
+
+    {% for p in card.propriedades.all %}
+      <div class="grid gap-1.5">
+        <label class="text-sm font-medium text-gray-900">
+          {{ p.definicao.nome }}
+          {% if p.definicao.obrigatorio %}<span class="text-red-500">*</span>{% endif %}
+        </label>
+
+        {% if p.definicao.tipo == "text" %}
+          <input type="text" name="prop_{{ p.definicao_id }}" value="{{ p.valor|default_if_none:'' }}"
+                 class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+
+        {% elif p.definicao.tipo == "number" %}
+          <input type="number" step="any" name="prop_{{ p.definicao_id }}" value="{{ p.valor|default_if_none:'' }}"
+                 class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+
+        {% elif p.definicao.tipo == "bool" %}
+          <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" name="prop_{{ p.definicao_id }}" {% if p.valor == "true" %}checked{% endif %}
+                   class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+            Ativo
+          </label>
+
+        {% elif p.definicao.tipo == "date" %}
+          <input type="date" name="prop_{{ p.definicao_id }}" value="{{ p.valor|default_if_none:'' }}"
+                 class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+
+        {% elif p.definicao.tipo == "select" %}
+          {% with opts=p.definicao.opcoes %}
+            <select name="prop_{{ p.definicao_id }}"
+                    class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+              <option value="">—</option>
+              {% if opts %}
+                {% for opt in opts %}
+                  <option value="{{ opt }}" {% if p.valor == opt %}selected{% endif %}>{{ opt }}</option>
+                {% endfor %}
+              {% endif %}
+            </select>
+          {% endwith %}
+
+        {% else %}
+          <input type="text" name="prop_{{ p.definicao_id }}" value="{{ p.valor|default_if_none:'' }}"
+                 class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="text-xs text-gray-500">Este pipeline não definiu propriedades para os tickets.</p>
+    {% endfor %}
+  </form>
+</div>
+

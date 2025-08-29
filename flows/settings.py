@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     #apps
     'kanban',
     'clientes',
+    'kanban_templates',
 ]
 
 MIDDLEWARE = [

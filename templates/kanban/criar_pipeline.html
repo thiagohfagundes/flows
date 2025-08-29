@@ -75,6 +75,46 @@
       </div>
     </section>
 
+    <!-- PROPRIEDADES DOS TICKETS -->
+      <section class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <div class="mb-3 flex items-end justify-between">
+          <div>
+            <h2 class="text-base font-semibold text-gray-900">Propriedades dos tickets</h2>
+            <p class="text-xs text-gray-500">Todas as propriedades definidas aqui serão criadas em cada card do pipeline.</p>
+          </div>
+          <button type="button"
+                  hx-get="{% url 'kanban:pipeline_create_prop_row' %}"
+                  hx-target="#props-tbody"
+                  hx-swap="beforeend"
+                  class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            + Adicionar propriedade
+          </button>
+        </div>
+
+        <div class="overflow-hidden rounded-lg border border-gray-200">
+          <table class="w-full text-left text-sm text-gray-700">
+            <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+              <tr>
+                <th class="w-10 px-3 py-3"></th> <!-- handle -->
+                <th class="w-56 px-3 py-3">Nome *</th>
+                <th class="w-40 px-3 py-3">Tipo *</th>
+                <th class="w-44 px-3 py-3">Opções (A;B;C)</th>
+                <th class="w-40 px-3 py-3">Valor padrão</th>
+                <th class="w-24 px-3 py-3">Obrigatório</th>
+                <th class="w-20 px-3 py-3 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="props-tbody" class="divide-y divide-gray-100">
+              {% if posted_props %}
+                {% for p in posted_props %}
+                  {% include "kanban/partials/pipeline_prop_row.html" with preset=p %}
+                {% endfor %}
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+    </section>
+
     <div class="flex items-center justify-between">
       <a href="{% url 'kanban:pipelines' %}" class="text-sm font-medium text-gray-600 hover:text-gray-800">Voltar</a>
       <button type="submit"

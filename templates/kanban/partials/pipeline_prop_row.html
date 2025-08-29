@@ -1,0 +1,42 @@
+<tr class="bg-white">
+  <td class="px-3 py-2 align-middle text-gray-400">
+    <span class="drag-handle cursor-grab">⋮⋮</span>
+    <input type="hidden" name="prop_ordem" value="{{ preset.ordem|default:'' }}">
+  </td>
+
+  <td class="px-3 py-2">
+    <input type="text" name="prop_nome" value="{{ preset.nome|default:'' }}" required
+           class="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-blue-500">
+  </td>
+
+  <td class="px-3 py-2">
+    <select name="prop_tipo"
+            class="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-blue-500">
+      {% for value,label in TIPOS_PROPRIEDADE %}
+        <option value="{{ value }}" {% if preset.tipo == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </td>
+
+  <td class="px-3 py-2">
+    <input type="text" name="prop_opcoes" value="{{ preset.opcoes|default:'' }}"
+           placeholder="A;B;C"
+           class="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-blue-500">
+  </td>
+
+  <td class="px-3 py-2">
+    <input type="text" name="prop_valor_padrao" value="{{ preset.valor_padrao|default:'' }}"
+           class="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-blue-500">
+  </td>
+
+  <td class="px-3 py-2">
+    <input type="checkbox" name="prop_obrigatorio" {% if preset.obrigatorio %}checked{% endif %}
+           class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+  </td>
+
+  <td class="px-3 py-2 text-right">
+    <button type="button"
+            onclick="this.closest('tr').remove()"
+            class="text-sm text-red-600 hover:text-red-700">remover</button>
+  </td>
+</tr>

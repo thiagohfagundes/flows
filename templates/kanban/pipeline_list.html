@@ -25,6 +25,7 @@
             <tr>
               <th class="px-4 py-3">Nome</th>
               <th class="px-4 py-3">Etapas</th>
+              <th class="px-4 py-3">Propriedades</th>
               <th class="px-4 py-3">Cards</th>
               <th class="px-4 py-3">Criado em</th>
               <th class="px-4 py-3 text-right">Ações</th>
@@ -45,6 +46,12 @@
                 <td class="px-4 py-3">
                   <span class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700">
                     {{ p.etapas.count }} etapa{{ p.etapas.count|pluralize:"s" }}
+                  </span>
+                </td>
+
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700">
+                    {{ p.propriedades_def.count }} propriedade{{ p.propriedades_def.count|pluralize:"s" }}
                   </span>
                 </td>
 

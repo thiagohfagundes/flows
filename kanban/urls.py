@@ -29,4 +29,8 @@ urlpatterns = [
     # tarefas (extra opcional)
     path("cards/<int:card_id>/tarefas/new/", views.tarefa_create, name="tarefa_create"),
     path("tarefas/<int:tarefa_id>/toggle/", views.tarefa_toggle, name="tarefa_toggle"),
+
+    #propriedades
+    path("cards/<int:card_id>/props/", views.card_props_update, name="card_props_update"),
+    path("pipelines/create/prop-row/", views.pipeline_create_prop_row, name="pipeline_create_prop_row")
 ]

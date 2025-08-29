@@ -9,13 +9,13 @@ STATUS_ETAPA = (
     ('CONCLUIDO', 'Concluído'),
 )
 
-TIPOS_PROPRIEDADE = (
-    ('TEXTO', 'Texto'),
-    ('NUMERO', 'Número'),
-    ('BOOLEANO', 'Booleano'),
-    ('CATEGORICO', 'Categórico'),
-    ('DATA', 'Data'),
-)
+TIPOS_PROPRIEDADE = [
+    ("text", "Texto"),
+    ("number", "Número"),
+    ("bool", "Booleano"),
+    ("date", "Data"),
+    ("select", "Seleção"),
+]
 
 STATUS_TAREFA = (
     ('ABERTO', 'Aberto'),
@@ -73,22 +73,32 @@ class Card(models.Model):
     def tarefas_concluidas(self):
         return self.tarefas.filter(concluido=True).count()
 
-class Categoria(models.Model):
-    nome = models.CharField(max_length=100)
-    descricao = models.TextField(blank=True, null=True)
+    
+class PipelinePropriedade(models.Model):
+    pipeline   = models.ForeignKey(Pipeline, on_delete=models.CASCADE, related_name="propriedades_def")
+    nome       = models.CharField(max_length=100)
+    tipo       = models.CharField(max_length=100, choices=TIPOS_PROPRIEDADE)
+    obrigatorio= models.BooleanField(default=False)
+    ordem      = models.PositiveIntegerField(default=0)
+    opcoes      = models.JSONField(blank=True, null=True)
+    valor_padrao = models.TextField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ("pipeline", "nome")
+        ordering = ["ordem", "id"]
 
     def __str__(self):
-        return self.nome
+        return f"{self.pipeline.nome} · {self.nome}"
 
 class Propriedade(models.Model):
-    nome = models.CharField(max_length=100)
-    tipo = models.CharField(max_length=100, choices=TIPOS_PROPRIEDADE)
-    valor = models.TextField(blank=True, null=True)
-    card = models.ForeignKey('Card', on_delete=models.CASCADE, related_name='propriedades')
-    categoria = models.ForeignKey('Categoria', on_delete=models.CASCADE, related_name='propriedades', blank=True, null=True)
+    card       = models.ForeignKey('Card', on_delete=models.CASCADE, related_name='propriedades')
+    definicao  = models.ForeignKey('PipelinePropriedade', on_delete=models.CASCADE, related_name='instancias', blank=True, null=True)
+    valor      = models.TextField(blank=True, null=True)
+    nome = models.CharField(max_length=100, blank=True, null=True)
+    tipo = models.CharField(max_length=100, choices=TIPOS_PROPRIEDADE, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.nome} ({self.tipo})"
+        return f"{self.definicao.nome} = {self.valor}"
 
 class Tarefa(models.Model):
     titulo = models.CharField(max_length=200)

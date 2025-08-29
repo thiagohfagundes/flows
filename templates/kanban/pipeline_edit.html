@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Editar pipeline{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-5xl px-4 py-8">
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-gray-900">Editar pipeline</h1>
+    <p class="text-sm text-gray-500">Altere nome/descrição, reordene etapas e ajuste as propriedades.</p>
+  </div>
+
+  <form method="post" class="space-y-6">
+    {% csrf_token %}
+
+    <!-- REQUISITOS -->
+    <section class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 class="mb-4 text-base font-semibold text-gray-900">Requisitos</h2>
+      <label class="block text-sm font-medium text-gray-900">Nome *</label>
+      <input type="text" name="nome" value="{{ nome|default:'' }}" required
+             class="mt-1 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500">
+      <label class="mt-4 block text-sm font-medium text-gray-900">Descrição</label>
+      <textarea name="descricao" rows="3"
+                class="mt-1 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500">{{ descricao|default:'' }}</textarea>
+    </section>
+
+    <!-- ETAPAS -->
+    <section class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <div class="mb-3 flex items-end justify-between">
+        <div>
+          <h2 class="text-base font-semibold text-gray-900">Etapas do pipeline</h2>
+          <p class="text-xs text-gray-500">Arraste as linhas — a ordem define a posição.</p>
+        </div>
+        <button type="button"
+                hx-get="{% url 'kanban:pipeline_create_stage_row' %}"
+                hx-target="#etapas-tbody" hx-swap="beforeend"
+                class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          + adicionar etapa
+        </button>
+      </div>
+
+      <div class="overflow-hidden rounded-lg border border-gray-200">
+        <table class="w-full text-left text-sm text-gray-700">
+          <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+            <tr>
+              <th class="w-10 px-3 py-3"></th>
+              <th class="px-3 py-3">Etapa</th>
+              <th class="w-2/3 px-3 py-3">Nome da etapa *</th>
+              <th class="w-48 px-3 py-3">Status</th>
+              <th class="w-28 px-3 py-3 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="etapas-tbody" class="divide-y divide-gray-100">
+            {% for e in etapas %}
+              {% include "kanban/partials/pipeline_stage_row.html" with preset_nome=e.nome preset_status=e.status preset_id=e.id %}
+            {% empty %}
+              <!-- sem etapas ainda -->
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PROPRIEDADES -->
+    <section class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <div class="mb-3 flex items-end justify-between">
+        <div>
+          <h2 class="text-base font-semibold text-gray-900">Propriedades dos tickets</h2>
+          <p class="text-xs text-gray-500">As propriedades definidas aqui aparecem em todos os cards do pipeline.</p>
+        </div>
+        <button type="button"
+                hx-get="{% url 'kanban:pipeline_create_prop_row' %}"
+                hx-target="#props-tbody" hx-swap="beforeend"
+                class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          + adicionar propriedade
+        </button>
+      </div>
+
+      <div class="overflow-hidden rounded-lg border border-gray-200">
+        <table class="w-full text-left text-sm text-gray-700">
+          <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+            <tr>
+              <th class="w-10 px-3 py-3"></th>
+              <th class="w-56 px-3 py-3">Nome *</th>
+              <th class="w-40 px-3 py-3">Tipo *</th>
+              <th class="w-44 px-3 py-3">Opções (A;B;C)</th>
+              <th class="w-40 px-3 py-3">Valor padrão</th>
+              <th class="w-24 px-3 py-3">Obrigatório</th>
+              <th class="w-20 px-3 py-3 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="props-tbody" class="divide-y divide-gray-100">
+            {% for p in props %}
+              {% include "kanban/partials/pipeline_prop_row.html" with preset=p %}
+            {% empty %}
+              <!-- sem props -->
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="flex items-center justify-between">
+      <a href="{% url 'kanban:pipeline_detail' pipeline.pk %}" class="text-sm font-medium text-gray-600 hover:text-gray-800">
+        Voltar
+      </a>
+      <button type="submit"
+              class="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300">
+        Salvar alterações
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Sortable: etapas e props -->
+<script>
+  function initSortableRows(tbodyId, hiddenName) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody || tbody._sortable) return;
+    tbody._sortable = new Sortable(tbody, {
+      handle: '.drag-handle',
+      animation: 150,
+      onEnd: () => {
+        [...tbody.querySelectorAll('tr')].forEach((tr, idx) => {
+          const input = tr.querySelector(`input[name="${hiddenName}"]`);
+          if (input) input.value = String(idx);
+        });
+      }
+    });
+    // inicializa ordem já exibida
+    [...tbody.querySelectorAll('tr')].forEach((tr, idx) => {
+      const input = tr.querySelector(`input[name="${hiddenName}"]`);
+      if (input && !input.value) input.value = String(idx);
+    });
+  }
+  initSortableRows('etapas-tbody', 'ordem');       // seu partial de etapa usa 'ordem'
+  initSortableRows('props-tbody', 'prop_ordem');   // seu partial de propriedade usa 'prop_ordem'
+
+  document.body.addEventListener('htmx:afterSwap', (e) => {
+    if (e.detail?.target?.id === 'etapas-tbody') initSortableRows('etapas-tbody', 'ordem');
+    if (e.detail?.target?.id === 'props-tbody') initSortableRows('props-tbody', 'prop_ordem');
+  });
+</script>
+{% endblock %}
