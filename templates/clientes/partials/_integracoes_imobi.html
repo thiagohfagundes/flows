@@ -1,0 +1,94 @@
+<!-- Integrações — Superlógica Imobi -->
+<section class="md:col-span-2 border-t pt-6 mt-6">
+  <div class="flex items-center justify-between">
+    <h3 class="text-base font-semibold text-gray-900">Integrações — Superlógica Imobi</h3>
+    <button type="button"
+            class="text-sm px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50"
+            data-modal-target="nova-licenca" data-modal-toggle="nova-licenca">
+      Nova licença
+    </button>
+  </div>
+
+  {% if licencas %}
+    <div class="mt-3 space-y-3">
+      {% for lic in licencas %}
+        <div class="border border-gray-200 rounded-xl p-4">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <div class="font-medium text-gray-900">
+                {{ lic.apelido|default:lic.license_name }}
+              </div>
+              <div class="text-xs text-gray-500">
+                Status:
+                {% if lic.integracao and lic.integracao.access_token %}
+                  <span id="status-{{ lic.id }}" class="text-green-700">Conectada</span>
+                  {% if lic.integracao.last_verified_at %}
+                    <span class="text-gray-400">• verificada em {{ lic.integracao.last_verified_at|date:"d/m/Y H:i" }}</span>
+                  {% endif %}
+                {% else %}
+                  <span id="status-{{ lic.id }}" class="text-gray-600">Não conectada</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Conectar com token (form próprio, fora do form de preferências) -->
+          <form method="post" action="{% url 'integrador:definir_token' lic.id %}" class="mt-3 flex items-center gap-2">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <input type="password" name="access_token" placeholder="Cole aqui o access_token da licença"
+                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
+                   autocomplete="new-password">
+            <button type="button" class="px-3 py-2 rounded-lg border" onclick="toggleToken(this)">
+              Mostrar
+            </button>
+            <button type="submit" class="px-3 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800">
+              Conectar
+            </button>
+          </form>
+
+          <div class="mt-2 flex items-center gap-4">
+            <button type="button" class="text-sm text-blue-700 hover:underline"
+                    onclick="verificarConexao({{ lic.id }}, '{% url 'integrador:verificar_license' lic.id %}')">
+              Verificar conexão
+            </button>
+
+            {% if lic.integracao and lic.integracao.access_token %}
+              <form method="post" action="{% url 'integrador:desconectar_license' lic.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="text-sm text-red-700 hover:underline">Desconectar</button>
+              </form>
+            {% endif %}
+
+            <span id="verif-{{ lic.id }}" class="text-xs text-gray-500"></span>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-sm text-gray-500 mt-2">Nenhuma licença cadastrada para este usuário.</p>
+  {% endif %}
+</section>
+
+<script>
+  function toggleToken(btn){
+    const input = btn.previousElementSibling;
+    input.type = (input.type === 'password') ? 'text' : 'password';
+    btn.textContent = (input.type === 'password') ? 'Mostrar' : 'Ocultar';
+  }
+  function verificarConexao(licenseId, url){
+    const lbl = document.getElementById('verif-' + licenseId);
+    const st  = document.getElementById('status-' + licenseId);
+    lbl.textContent = 'verificando...';
+    fetch(url).then(r => r.json()).then(data => {
+      if (data.ok){
+        lbl.textContent = 'OK';
+        if (st){ st.textContent = 'Conectada'; st.className = 'text-green-700'; }
+      } else {
+        lbl.textContent = 'Falhou';
+        if (st){ st.textContent = 'Não conectada'; st.className = 'text-gray-600'; }
+      }
+    }).catch(() => { lbl.textContent = 'Erro'; });
+  }
+</script>

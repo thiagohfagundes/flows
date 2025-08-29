@@ -11,10 +11,21 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = environ.Env()
+env.read_env(BASE_DIR / '.env')
+
+
+INTEGRADOR_APP_TOKEN = env('INTEGRADOR_APP_TOKEN')
+INTEGRADOR_APP_SECRET = env('INTEGRADOR_APP_SECRET')
+SUPERLOGICA_API_BASE = env('SUPERLOGICA_API_BASE', default='https://api.superlogica.net')
+URL_PARA_APP_TOKEN = env('URL_PARA_APP_TOKEN', default='https://{license}.superlogica.net/clients/financeiro/login')
+SUPERLOGICA_HEALTHCHECK_PATH = env('SUPERLOGICA_HEALTHCHECK_PATH', default='/imobiliarias/v2/clientes?limit=1')
+INTEGRADOR_ENCRYPTION_KEY = env('INTEGRADOR_ENCRYPTION_KEY')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -42,6 +53,7 @@ INSTALLED_APPS = [
     'kanban',
     'clientes',
     'kanban_templates',
+    'integrador',
 ]
 
 MIDDLEWARE = [

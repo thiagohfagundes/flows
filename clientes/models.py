@@ -40,3 +40,19 @@ class Empresa(models.Model):
 
     def __str__(self):
         return self.nome
+
+class ClienteLicense(models.Model):
+    """
+    Uma licença do Superlógica Imobi associada a um cliente.
+    O license_name é o subdomínio (ex: "minhaimobiliaria").
+    """
+    cliente = models.ForeignKey(Pessoa, on_delete=models.CASCADE, related_name='licencas')
+    license_name = models.SlugField(unique=True)  # geralmente é globalmente único
+    apelido = models.CharField(max_length=120, blank=True, help_text="apelido opcional para exibir na UI", null=True)
+
+    class Meta:
+        verbose_name = "Licença do Cliente"
+        verbose_name_plural = "Licenças do Cliente"
+
+    def __str__(self):
+        return f"{self.license_name} ({self.cliente})"

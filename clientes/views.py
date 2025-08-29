@@ -4,6 +4,9 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
+from .forms import UserForm, PessoaForm, EmpresaQuickForm, ClienteLicenseForm
+from .models import Empresa, ClienteLicense
+
 # Create your views here.
 def login_view(request):
     if request.method == "POST":
@@ -39,15 +42,26 @@ def register_view(request):
 
     return render(request, "auth/register.html")
 
-from .forms import UserForm, PessoaForm, EmpresaQuickForm
-from .models import Empresa
-
 @login_required
 def perfil(request):
     pessoa = request.user.pessoa  # graças ao OneToOneField
     user_form = UserForm(instance=request.user)
     pessoa_form = PessoaForm(instance=pessoa)
     empresa_form = EmpresaQuickForm()
+    licencas = ClienteLicense.objects.filter(
+        cliente__usuario=request.user  # ajuste para sua modelagem de dono da licença
+    ).select_related('integracao', 'cliente')
+
+    if request.method == "POST" and request.POST.get("which") == "nova_licenca":
+        form = ClienteLicenseForm(request.POST, user=request.user)
+        if form.is_valid():
+            lic = form.save()
+            messages.success(request, f"Licença {lic.license_name} criada.")
+            return redirect(request.path)  # recarrega a página
+        else:
+            licenca_form = form  # mantém erros no template
+    else:
+        licenca_form = ClienteLicenseForm(user=request.user)
 
     if request.method == "POST":
         which = request.POST.get("which", "perfil")
@@ -76,5 +90,7 @@ def perfil(request):
         "pessoa_form": pessoa_form,
         "empresa_form": empresa_form,
         "pessoa": pessoa,
+        "licencas": licencas,
         "minhas_empresas": minhas_empresas,
+        "licenca_form": licenca_form,
     })
