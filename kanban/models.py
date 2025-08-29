@@ -100,6 +100,45 @@ class Propriedade(models.Model):
     def __str__(self):
         return f"{self.definicao.nome} = {self.valor}"
 
+class Checklist(models.Model):
+    nome        = models.CharField(max_length=120)
+    descricao   = models.TextField(blank=True, null=True)
+    pipeline    = models.ForeignKey('Pipeline', on_delete=models.CASCADE, related_name='checklists', null=True, blank=True)
+    etapa       = models.ForeignKey('Etapa', on_delete=models.CASCADE, related_name='checklists', null=True, blank=True)
+    ordem       = models.PositiveIntegerField(default=0)
+    criado_por  = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ["ordem", "id"]
+
+    def clean(self):
+        # Garantia cross-DB: exatamente um âncora
+        has_pipe = bool(self.pipeline_id)
+        has_stage = bool(self.etapa_id)
+        if has_pipe == has_stage:
+            from django.core.exceptions import ValidationError
+            raise ValidationError("Checklist deve estar vinculada ao pipeline OU à etapa (exclusivo).")
+
+    def __str__(self):
+        target = self.pipeline or self.etapa
+        return f"{self.nome} → {target}"
+
+class ChecklistItem(models.Model):
+    checklist   = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name='itens')
+    titulo      = models.CharField(max_length=200)
+    descricao   = models.TextField(blank=True, null=True)
+    obrigatorio = models.BooleanField(default=False)
+    ordem       = models.PositiveIntegerField(default=0)
+    # Campos extras úteis:
+    prazo_dias  = models.IntegerField(blank=True, null=True)   # prazo relativo ao nascimento do card
+    atribuido_a = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='itens_checklist_atribuidos')
+
+    class Meta:
+        ordering = ["ordem", "id"]
+
+    def __str__(self):
+        return self.titulo
+    
 class Tarefa(models.Model):
     titulo = models.CharField(max_length=200)
     descricao = models.TextField(blank=True, null=True)
@@ -113,6 +152,7 @@ class Tarefa(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_TAREFA, default='ABERTO')
     criado_por = models.ForeignKey(User, on_delete=models.CASCADE)
     atribuido_a = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tarefas_atribuidas', blank=True, null=True)
+    checklist_item = models.ForeignKey('ChecklistItem', on_delete=models.SET_NULL, null=True, blank=True, related_name='tarefas_geradas')
 
     def __str__(self):
         return self.titulo

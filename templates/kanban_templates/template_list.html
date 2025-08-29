@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Templates{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-6xl px-4 py-8">
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-900">Templates</h1>
+      <p class="text-sm text-gray-500">Reutilize processos: instancie como pipelines em um clique.</p>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <form method="get" class="mb-4 grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-5">
+    <div class="md:col-span-2">
+      <label class="mb-1 block text-xs font-medium text-gray-600">Criado por</label>
+      <select name="criado_por" class="w-full rounded-md border-gray-300 bg-white px-2 py-1.5 text-sm">
+        <option value="">Todos</option>
+        <option value="me" {% if current.criado_por == 'me' %}selected{% endif %}>Eu</option>
+        {% for c in creators %}
+          <option value="{{ c.criado_por_id }}" {% if current.criado_por|add:'' == c.criado_por_id|add:'' %}selected{% endif %}>
+            {{ c.criado_por__username }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-600">De</label>
+      <input type="date" name="de" value="{{ current.de }}"
+             class="w-full rounded-md border-gray-300 bg-white px-2 py-1.5 text-sm">
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-600">Até</label>
+      <input type="date" name="ate" value="{{ current.ate }}"
+             class="w-full rounded-md border-gray-300 bg-white px-2 py-1.5 text-sm">
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-600">Ordenar</label>
+      <select name="ordenar" class="w-full rounded-md border-gray-300 bg-white px-2 py-1.5 text-sm">
+        <option value="recentes" {% if current.ordenar == 'recentes' %}selected{% endif %}>Mais recentes</option>
+        <option value="antigos" {% if current.ordenar == 'antigos' %}selected{% endif %}>Mais antigos</option>
+        <option value="az" {% if current.ordenar == 'az' %}selected{% endif %}>A–Z</option>
+        <option value="za" {% if current.ordenar == 'za' %}selected{% endif %}>Z–A</option>
+      </select>
+    </div>
+
+    <div class="col-span-full flex items-center justify-end gap-2">
+        <a href="{% url 'kanban_templates:template_list' %}"
+        class="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+        Limpar
+        </a>
+        <button class="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">
+        Filtrar
+        </button>
+    </div>
+  </form>
+
+  <!-- Grid de cards -->
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3" role="list">
+    {% for t in page_obj.object_list %}
+        <a href="{% url 'kanban_templates:template_detail' t.id %}"
+        class="group flex flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition
+                hover:-translate-y-0.5 hover:shadow-md hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        role="listitem" aria-label="Abrir template {{ t.nome }}">
+        <div class="mb-2 flex items-start justify-between">
+            <h2 class="line-clamp-1 text-base font-semibold text-gray-900">{{ t.nome }}</h2>
+            <span class="ml-2 shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+            {{ t.get_visibilidade_display }}
+            </span>
+        </div>
+
+        {% if t.descricao %}
+            <p class="mb-3 line-clamp-3 text-sm text-gray-600">{{ t.descricao }}</p>
+        {% endif %}
+
+        <div class="mb-3 flex flex-wrap gap-2 text-xs text-gray-600">
+            <span class="rounded-full bg-gray-100 px-2 py-0.5">Etapas: {{ t.count_etapas }}</span>
+            <span class="rounded-full bg-gray-100 px-2 py-0.5">Propriedades: {{ t.count_props }}</span>
+            <span class="rounded-full bg-gray-100 px-2 py-0.5">Checklists: {{ t.count_checklists }}</span>
+        </div>
+
+        <div class="mt-auto flex items-center justify-between text-xs text-gray-500">
+            <span>Criado por <strong>{{ t.criado_por.username }}</strong></span>
+            <span>{{ t.criado_em|date:"d/m/Y H:i" }}</span>
+        </div>
+
+        <div class="mt-2 flex items-center justify-end text-sm text-blue-600">
+            <span class="inline-flex items-center">
+            Ver detalhes
+            <svg class="ms-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            </span>
+        </div>
+        </a>
+    {% empty %}
+        <div class="col-span-full rounded-lg border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
+        Nenhum template encontrado com esses filtros.
+        </div>
+    {% endfor %}
+    </div>
+
+
+  <!-- Paginação -->
+  {% if page_obj.paginator.num_pages > 1 %}
+    <div class="mt-6 flex items-center justify-center gap-2">
+      {% if page_obj.has_previous %}
+        <a class="rounded-md border px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+           href="?{% if base_qs %}{{ base_qs }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
+      {% else %}
+        <span class="cursor-not-allowed rounded-md border px-3 py-1.5 text-sm text-gray-400">Anterior</span>
+      {% endif %}
+
+      <span class="rounded-md border px-3 py-1.5 text-sm text-gray-700">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a class="rounded-md border px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+           href="?{% if base_qs %}{{ base_qs }}&{% endif %}page={{ page_obj.next_page_number }}">Próxima</a>
+      {% else %}
+        <span class="cursor-not-allowed rounded-md border px-3 py-1.5 text-sm text-gray-400">Próxima</span>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

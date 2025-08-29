@@ -9,8 +9,10 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("pipelines/", views.pipeline_list, name="pipelines"),
     path("pipelines/<int:pipeline_id>/", views.pipeline_detail, name="pipeline_detail"),
+    path("pipelines/detail/<int:pipeline_id>/", views.pipeline_detail, name="pipeline_details_view"), # MUDAR
+    path("pipelines/config/<int:pipeline_id>/", views.pipeline_detail, name="pipeline_config_view"), # MUDAR
     path("pipelines/criar/stage-row/", views.pipeline_create_stage_row, name="pipeline_create_stage_row"),
-    path("pipelines/criar/", views.pipeline_create, name="pipeline_create"),  # <--- NOVA
+    path("pipelines/criar/", views.pipeline_create, name="pipeline_create"), 
     path("pipelines/<int:pipeline_id>/delete/", views.pipeline_delete, name="pipeline_delete"),
 
     # etapas (criar/editar rápido pela UI)
