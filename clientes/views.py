@@ -15,7 +15,7 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect("/kanban/pipelines/")  
+            return redirect("/pipelines")  
         else:
             messages.error(request, "Usuário ou senha inválidos.")
     return render(request, "auth/login.html")
@@ -38,7 +38,7 @@ def register_view(request):
             user = User.objects.create_user(username=username, email=email, password=password)
             login(request, user)
             messages.success(request, "Conta criada com sucesso! 🎉")
-            return redirect("/kanban/pipelines/")
+            return redirect("/pipelines")
 
     return render(request, "auth/register.html")
 
