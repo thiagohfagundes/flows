@@ -1,0 +1,252 @@
+<!-- Floating AI Agent Button (FAB) -->
+<button id="ai-agent-fab"
+        type="button"
+        class="fixed bottom-6 right-6 z-40 inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-300 dark:focus:ring-indigo-800">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7">
+    <path d="M9 7.5A1.5 1.5 0 0 1 10.5 6h3A1.5 1.5 0 0 1 15 7.5V9h1.5a2.25 2.25 0 0 1 2.25 2.25V15a3.75 3.75 0 0 1-3.75 3.75h-6A3.75 3.75 0 0 1 5.25 15v-3.75A2.25 2.25 0 0 1 7.5 9H9V7.5Z"/>
+    <path d="M9.75 3a.75.75 0 0 0 0 1.5h4.5a.75.75 0 0 0 0-1.5h-4.5Z"/>
+  </svg>
+  <span id="ai-agent-unread" class="hidden absolute -top-1 -right-1 select-none rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-semibold leading-none text-white shadow">1</span>
+</button>
+
+<!-- Drawer -->
+<div id="aiAgentDrawer" class="fixed top-0 right-0 z-50 h-screen p-0 overflow-hidden transition-transform translate-x-full bg-white w-full sm:w-[420px] shadow-2xl dark:bg-gray-800"
+     tabindex="-1" aria-labelledby="aiAgentDrawerLabel">
+  <!-- Header -->
+  <div class="flex items-center justify-between px-5 py-4 border-b bg-gray-50 dark:bg-gray-900 dark:border-gray-700">
+    <div class="flex items-center gap-3">
+      <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600 text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path d="M9 7.5A1.5 1.5 0 0 1 10.5 6h3A1.5 1.5 0 0 1 15 7.5V9h1.5a2.25 2.25 0 0 1 2.25 2.25V15a3.75 3.75 0 0 1-3.75 3.75h-6A3.75 3.75 0 0 1 5.25 15v-3.75A2.25 2.25 0 0 1 7.5 9H9V7.5Z"/></svg>
+      </span>
+      <div>
+        <h2 id="aiAgentDrawerLabel" class="text-base font-semibold text-gray-900 dark:text-white">Agente IA</h2>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ pipeline.nome }}</p>
+      </div>
+    </div>
+    <button id="aiAgentCloseBtn" type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+      <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="px-5 pt-3">
+    <ul class="flex flex-wrap -mb-px text-sm font-medium text-center"
+        id="ai-agent-tabs"
+        data-tabs-toggle="#ai-agent-tabs-content"
+        data-tabs-active-classes="text-indigo-600 border-indigo-600"
+        data-tabs-inactive-classes="text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300"
+        role="tablist">
+      <li class="mr-2" role="presentation">
+        <button class="inline-block p-3 border-b-2 rounded-t-lg" id="tab-chat" data-tabs-target="#tab-chat-pane" type="button" role="tab" aria-controls="tab-chat-pane" aria-selected="true">Chat</button>
+      </li>
+      <li class="mr-2" role="presentation">
+        <button class="inline-block p-3 border-b-2 rounded-t-lg" id="tab-tasks" data-tabs-target="#tab-tasks-pane" type="button" role="tab" aria-controls="tab-tasks-pane" aria-selected="false">Tarefas</button>
+      </li>
+      <li class="mr-2" role="presentation">
+        <button class="inline-block p-3 border-b-2 rounded-t-lg" id="tab-rules" data-tabs-target="#tab-rules-pane" type="button" role="tab" aria-controls="tab-rules-pane" aria-selected="false">Regras</button>
+      </li>
+      <li role="presentation">
+        <button class="inline-block p-3 border-b-2 rounded-t-lg" id="tab-config" data-tabs-target="#tab-config-pane" type="button" role="tab" aria-controls="tab-config-pane" aria-selected="false">Config</button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Tabs Content -->
+  <div id="ai-agent-tabs-content" class="h-[calc(100%-112px)] flex flex-col">
+    <!-- CHAT (input agora DENTRO da aba) -->
+    <div id="tab-chat-pane" role="tabpanel" aria-labelledby="tab-chat" class="flex-1 flex flex-col h-full">
+      <div class="flex-1 overflow-y-auto p-5 space-y-4" id="ai-chat-scroll">
+        <div class="flex items-start gap-3">
+          <div class="shrink-0 h-9 w-9 rounded-full bg-indigo-600 text-white flex items-center justify-center">A</div>
+          <div class="max-w-[80%]">
+            <div class="p-3 text-sm text-gray-900 bg-gray-100 rounded-e-xl rounded-es-xl shadow dark:bg-gray-700 dark:text-gray-100">
+              Olá {{ user.username }}! Sou seu Assistente do {{ pipeline.nome }}. Como posso ajudar hoje?
+            </div>
+            
+          </div>
+        </div>
+        <div id="ai-chat-list" class="space-y-4"></div>
+      </div>
+
+      <div class="p-4 border-t bg-white dark:bg-gray-800 dark:border-gray-700" id="ai-chat-input">
+        <form id="ai-chat-form" class="flex items-end gap-2">
+          <div class="relative flex-1">
+            <textarea id="ai-chat-text" rows="1" placeholder="Digite sua pergunta ou pedido sobre {{ pipeline.nome }}..." class="block w-full resize-none rounded-lg border border-gray-300 bg-gray-50 p-3 pr-12 text-sm text-gray-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea>
+            <div class="absolute bottom-2 right-2 flex items-center gap-2">
+              <button type="button" class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600" title="Anexar">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-gray-500 dark:text-gray-300"><path d="M8.25 12.75 12 9a3 3 0 1 1 4.243 4.243l-5.303 5.303a4.5 4.5 0 0 1-6.364-6.364L9.94 6.818"/></svg>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-300 dark:focus:ring-indigo-800">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" class="w-4 h-4"><path d="M2.94 2.94a.75.75 0 0 1 .82-.16l13 5.5a.75.75 0 0 1 0 1.38l-13 5.5a.75.75 0 0 1-1.03-.86l1.4-5.04a.75.75 0 0 1 .54-.54l5.04-1.4-5.04-1.4a.75.75 0 0 1-.54-.54l-1.4-5.04a.75.75 0 0 1 .21-.3Z"/></svg>
+            Enviar
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- TAREFAS -->
+    <div id="tab-tasks-pane" class="hidden overflow-y-auto p-5 space-y-3" role="tabpanel" aria-labelledby="tab-tasks">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Sugestões de tarefas</h3>
+        <button type="button" class="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">
+          <span>Gerar</span>
+        </button>
+      </div>
+      <ul class="space-y-2" id="ai-tasks-list">
+        <li class="rounded-lg border p-3 shadow-sm dark:border-gray-700">
+          <div class="flex items-start gap-3">
+            <span class="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[10px]">✓</span>
+            <div class="flex-1">
+              <a href="#" class="text-sm font-medium text-indigo-600 hover:underline">Emitir novo boleto para Agatha Andreia Eduarda Barros</a>
+              <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">Agente: Maria · Função: Emissão de boleto · Data: 23/10/2023, 10:00</p>
+            </div>
+            <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" title="Excluir">
+              <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </li>
+      </ul>
+      <button class="mt-2 w-full rounded-lg border border-dashed p-3 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">Solicitar tarefa</button>
+    </div>
+
+    <!-- REGRAS -->
+    <div id="tab-rules-pane" class="hidden overflow-y-auto p-5 space-y-3" role="tabpanel" aria-labelledby="tab-rules">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Regras de Negócio</h3>
+        <button class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-500">Nova Regra</button>
+      </div>
+      <ul id="ai-rules-list" class="space-y-2">
+        <li class="rounded-lg border p-3 dark:border-gray-700">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h4 class="text-sm font-medium text-gray-900 dark:text-white">Cobrança antecipada 1 dia antes do vencimento</h4>
+              <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">Envie uma mensagem via WhatsApp e e-mail para toda base 1 dia antes da cobrança.</p>
+              <p class="mt-1 text-[11px] text-gray-400">Criado em 28/08/2025, 19:29:11</p>
+            </div>
+            <div class="flex items-center gap-2 text-gray-400">
+              <button class="hover:text-gray-600 dark:hover:text-gray-200" title="Editar">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232a2.5 2.5 0 0 1 3.536 3.536L7.5 20.036l-4 1 1-4L15.232 5.232Z"/></svg>
+              </button>
+              <button class="hover:text-red-600" title="Excluir">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="tab-config-pane" class="hidden overflow-y-auto p-5 space-y-4" role="tabpanel" aria-labelledby="tab-config">
+      <div class="rounded-lg border p-4 dark:border-gray-700">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Preferências</h3>
+        <div class="mt-3 space-y-3 text-sm">
+          <label class="flex items-center gap-2">
+            <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"> Notificar quando houver novas tarefas
+          </label>
+          <label class="flex items-center gap-2">
+            <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"> Mostrar dicas contextuais
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop -->
+<div id="aiAgentBackdrop" class="fixed inset-0 z-40 hidden bg-black/40"></div>
+
+<script>
+  (function () {
+    const fab = document.getElementById('ai-agent-fab');
+    const drawer = document.getElementById('aiAgentDrawer');
+    const closeBtn = document.getElementById('aiAgentCloseBtn');
+    const backdrop = document.getElementById('aiAgentBackdrop');
+    const unread = document.getElementById('ai-agent-unread');
+
+    // Toggle chat input visibility per tab
+    const chatInputWrap = document.getElementById('ai-chat-input');
+    function showChatInput(show){ if(chatInputWrap){ chatInputWrap.classList.toggle('hidden', !show); } }
+    const tabChatBtn = document.getElementById('tab-chat');
+    const otherTabs = ['tab-tasks','tab-rules','tab-config'].map(id => document.getElementById(id)).filter(Boolean);
+    tabChatBtn && tabChatBtn.addEventListener('click', () => showChatInput(true));
+    otherTabs.forEach(el => el.addEventListener('click', () => showChatInput(false)));
+
+    function openDrawer() {
+      drawer.classList.remove('translate-x-full');
+      backdrop.classList.remove('hidden');
+      unread.classList.add('hidden');
+      showChatInput(true); // padrão ao abrir
+    }
+    function closeDrawer() {
+      drawer.classList.add('translate-x-full');
+      backdrop.classList.add('hidden');
+    }
+    fab.addEventListener('click', openDrawer);
+    closeBtn.addEventListener('click', closeDrawer);
+    backdrop.addEventListener('click', closeDrawer);
+
+    // Pills de sugestão
+    document.querySelectorAll('[data-suggest]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const text = btn.getAttribute('data-suggest');
+        const textarea = document.getElementById('ai-chat-text');
+        textarea.value = text;
+        textarea.dispatchEvent(new Event('input'));
+      });
+    });
+
+    // Auto-expand textarea
+    const textarea = document.getElementById('ai-chat-text');
+    textarea.addEventListener('input', () => {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px';
+    });
+
+    // Demo de envio
+    const chatList = document.getElementById('ai-chat-list');
+    const chatScroll = document.getElementById('ai-chat-scroll');
+    document.getElementById('ai-chat-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const value = textarea.value.trim();
+      if (!value) return;
+      const userRow = document.createElement('div');
+      userRow.className = 'flex items-start gap-3 justify-end';
+      userRow.innerHTML = `
+        <div class="max-w-[80%]">
+          <div class="bg-indigo-600 text-white rounded-s-xl rounded-ee-xl p-3 text-sm shadow">${value}</div>
+        </div>
+        <div class="shrink-0 h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">Você</div>
+      `;
+      chatList.appendChild(userRow);
+      chatScroll.scrollTop = chatScroll.scrollHeight;
+
+      setTimeout(() => {
+        const agentRow = document.createElement('div');
+        agentRow.className = 'flex items-start gap-3';
+        agentRow.innerHTML = `
+          <div class="shrink-0 h-9 w-9 rounded-full bg-indigo-600 text-white flex items-center justify-center">A</div>
+          <div class="max-w-[80%]">
+            <div class="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-e-xl rounded-es-xl p-3 text-sm shadow">Exemplo de resposta do agente. Aqui você poderá conectar sua view do Django para buscar a resposta real.</div>
+          </div>
+        `;
+        chatList.appendChild(agentRow);
+        chatScroll.scrollTop = chatScroll.scrollHeight;
+      }, 400);
+
+      textarea.value = '';
+      textarea.dispatchEvent(new Event('input'));
+      chatScroll.scrollTop = chatScroll.scrollHeight;
+    });
+
+    function simulateIncoming() {
+      if (drawer.classList.contains('translate-x-full')) {
+        unread.textContent = String(Number(unread.textContent || '0') + 1);
+        unread.classList.remove('hidden');
+      }
+    }
+    window.simulateAiAgentMessage = simulateIncoming;
+  })();
+</script>

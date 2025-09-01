@@ -132,7 +132,9 @@ class ChecklistItem(models.Model):
     # Campos extras úteis:
     prazo_dias  = models.IntegerField(blank=True, null=True)   # prazo relativo ao nascimento do card
     atribuido_a = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='itens_checklist_atribuidos')
-
+    depende_de = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='dependentes')
+    requer_aprovacao = models.BooleanField(default=False)
+    
     class Meta:
         ordering = ["ordem", "id"]
 

@@ -1,36 +1,126 @@
 <!-- templates/kanban/partials/card.html -->
-<article id="card-{{ card.id }}" data-card-id="{{ card.id }}"
+<article id="card-{{ card.id }}"
+         data-card-id="{{ card.id }}"
          data-move-url="{% url 'kanban:card_move' card.id %}"
-         class="cursor-pointer rounded-lg border border-gray-200 bg-white p-3 shadow-sm hover:border-blue-300"
+         class="group cursor-pointer rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition
+                hover:border-blue-300 hover:shadow-md"
          hx-get="{% url 'kanban:card_detail' card.id %}"
          hx-target="#card-drawer-body" hx-swap="innerHTML"
-         onclick="openCardDrawer()">
+         onclick="openCardDrawer()"
+         aria-label="Abrir card {{ card.titulo }}">
 
-  <div class="flex items-start justify-between">
-    <h4 class="text-sm font-medium text-gray-900">{{ card.titulo }}</h4>
+  <!-- topo: título + ações -->
+  <div class="flex items-start justify-between gap-3">
+    <h4 class="line-clamp-1 text-sm font-semibold text-gray-900">
+      {{ card.titulo }}
+    </h4>
 
-    <button class="text-xs text-gray-400 hover:text-red-600"
-            onclick="event.stopPropagation();"
-            hx-post="{% url 'kanban:card_delete' card.id %}"
-            hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
-            hx-target="#card-{{ card.id }}" hx-swap="outerHTML">
-      excluir
-    </button>
+    <div class="flex items-center gap-2">
+      <!-- indicador de atualização recente -->
+      <span class="hidden text-[10px] text-gray-400 group-hover:inline">
+        atualizado {{ card.data_ult_modificacao|timesince }} atrás
+      </span>
+
+      <!-- ação: excluir -->
+      <button class="rounded-md px-1.5 py-0.5 text-xs text-gray-400 hover:bg-red-50 hover:text-red-600"
+              onclick="event.stopPropagation();"
+              hx-post="{% url 'kanban:card_delete' card.id %}"
+              hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+              hx-target="#card-{{ card.id }}" hx-swap="outerHTML"
+              aria-label="Excluir card">
+        excluir
+      </button>
+    </div>
   </div>
 
-  {% if card.descricao %}
-    <p class="mt-1 text-xs text-gray-500 line-clamp-2">{{ card.descricao }}</p>
-  {% endif %}
-
-  <!-- progresso de tarefas estilo Trello -->
-  <div class="mt-2 flex items-center justify-between">
-    <span class="inline-flex items-center gap-1 text-xs text-gray-500">
-      <svg class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 10-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z"/>
+  <!-- badges de contexto -->
+  <div class="mt-1.5 flex flex-wrap items-center gap-2">
+    <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700">
+      <!-- relógio -->
+      <svg class="mr-1 h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-12.5a.75.75 0 00-1.5 0v4.25c0 .2.08.39.22.53l2.5 2.5a.75.75 0 101.06-1.06L10.75 9.9V5.5z" clip-rule="evenodd"/>
       </svg>
-      {{ card.tarefas_concluidas }}/{{ card.tarefas_total }}
+      criado {{ card.data_criacao|timesince }} atrás
     </span>
   </div>
+
+  <!-- descrição -->
+  {% if card.descricao %}
+    <p class="mt-2 line-clamp-3 text-xs text-gray-600">
+      {{ card.descricao }}
+    </p>
+  {% endif %}
+
+  <!-- progresso -->
+  {% with total=card.tarefas_total concluded=card.tarefas_concluidas %}
+    <div class="mt-3">
+      <div class="flex items-center justify-between">
+        <span class="inline-flex items-center gap-1 text-xs text-gray-500">
+          <svg class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 10-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z"/>
+          </svg>
+          {{ concluded }}/{{ total }}
+        </span>
+
+        {% if total %}
+          <span class="text-[11px] text-gray-500">
+            {% widthratio concluded total 100 %}% concluído
+          </span>
+        {% endif %}
+      </div>
+
+      <!-- barra -->
+      <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+        {% if total and concluded %}
+          {% widthratio concluded total 100 as pct %}
+          <div class="h-full rounded-full bg-emerald-500 transition-[width] duration-300"
+               style="width: {{ pct }}%;"></div>
+        {% else %}
+          <div class="h-full rounded-full bg-gray-200" style="width: 0%;"></div>
+        {% endif %}
+      </div>
+    </div>
+  {% endwith %}
+
+  <!-- rodapé: pessoas -->
+  <div class="mt-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <!-- criado por -->
+      <div class="flex items-center gap-1.5">
+        <div class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-[10px] font-semibold text-gray-600"
+             title="Criado por {{ card.criado_por.get_full_name|default:card.criado_por.username }}">
+          {{ card.criado_por.get_full_name|default:card.criado_por.username|slice:":1"|upper }}
+        </div>
+        <span class="hidden text-[11px] text-gray-500 sm:inline">
+          {{ card.criado_por.get_full_name|default:card.criado_por.username }}
+        </span>
+      </div>
+
+      <!-- atribuído a -->
+      {% if card.atribuido_a %}
+      <div class="flex items-center gap-1.5">
+        <svg class="h-3.5 w-3.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M13 7a3 3 0 11-6 0 3 3 0 016 0zm-9 9a6 6 0 1112 0H4z"/>
+        </svg>
+        <div class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-[10px] font-semibold text-blue-700"
+             title="Responsável: {{ card.atribuido_a.get_full_name|default:card.atribuido_a.username }}">
+          {{ card.atribuido_a.get_full_name|default:card.atribuido_a.username|slice:":1"|upper }}
+        </div>
+        <span class="hidden text-[11px] text-gray-600 sm:inline">
+          {{ card.atribuido_a.get_full_name|default:card.atribuido_a.username }}
+        </span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- “arrastar” visual (se usar drag&drop) -->
+    <div class="text-gray-300 group-hover:text-gray-400" aria-hidden="true">
+      <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M7 4a1 1 0 110-2 1 1 0 010 2zm6 0a1 1 0 110-2 1 1 0 010 2zM7 11a1 1 0 110-2 1 1 0 010 2zm6 0a1 1 0 110-2 1 1 0 010 2zM7 18a1 1 0 110-2 1 1 0 010 2zm6 0a1 1 0 110-2 1 1 0 010 2z"/>
+      </svg>
+    </div>
+  </div>
 </article>
+
 
 
