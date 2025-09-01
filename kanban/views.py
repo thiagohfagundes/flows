@@ -1,6 +1,6 @@
 # kanban/views.py
 from django.shortcuts import get_object_or_404, render, redirect
-from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
+from django.http import HttpResponseBadRequest, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.template.loader import render_to_string
 from django.db import transaction
@@ -9,7 +9,6 @@ from django.utils import timezone
 from django.contrib import messages
 from django.db.models import Prefetch
 from .models import Pipeline, Etapa, Card, Tarefa, PipelinePropriedade, Propriedade, STATUS_TAREFA, STATUS_ETAPA, TIPOS_PROPRIEDADE
-from .forms import PipelineForm
 
 def home(request):
     return render(request, "kanban/home.html")

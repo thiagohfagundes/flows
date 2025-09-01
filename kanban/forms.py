@@ -1,5 +1,5 @@
 from django import forms
-from .models import Pipeline  # ajuste o import se o modelo tiver outro nome
+from .models import Checklist, Pipeline  # ajuste o import se o modelo tiver outro nome
 
 class PipelineForm(forms.ModelForm):
     class Meta:
@@ -14,3 +14,4 @@ class PipelineForm(forms.ModelForm):
                 "class": "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
             }),
         }
+

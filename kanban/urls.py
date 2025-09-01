@@ -34,5 +34,5 @@ urlpatterns = [
 
     #propriedades
     path("cards/<int:card_id>/props/", views.card_props_update, name="card_props_update"),
-    path("pipelines/create/prop-row/", views.pipeline_create_prop_row, name="pipeline_create_prop_row")
+    path("pipelines/create/prop-row/", views.pipeline_create_prop_row, name="pipeline_create_prop_row"),
 ]
