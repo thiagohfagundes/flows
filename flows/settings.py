@@ -31,7 +31,7 @@ INTEGRADOR_ENCRYPTION_KEY = env('INTEGRADOR_ENCRYPTION_KEY')
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-$ob=cdln-)jq_-wpv(-d+d7$$6n=2ec!8_e&^7-84jvwbx9re7'
+SECRET_KEY = env('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
