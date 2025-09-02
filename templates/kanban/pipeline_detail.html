@@ -81,7 +81,7 @@
           </a>
 
           <!-- Configurações avançadas -->
-          <a href="{% url 'kanban:pipeline_config_view' pipeline.id %}"
+          <a href="#"
             class="inline-flex h-10 w-10 items-center justify-center border-l border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-200"
             aria-label="Configurações avançadas"
             data-tooltip-target="tt-pipe-config" data-tooltip-placement="bottom">
@@ -126,7 +126,7 @@
               <path stroke-linecap="round" stroke-linejoin="round"
                     d="M19.5 13.5V19A2.5 2.5 0 0117 21.5H6A2.5 2.5 0 013.5 19V8A2.5 2.5 0 016 5.5h5.5" />
             </svg>
-            <span class="sr-only">Editar pipeline</span>
+            <span class="sr-only">Editar processo</span>
           </a>
 
           <!-- Novo card (primário) -->
@@ -144,33 +144,6 @@
           </button>
         </div>
       </div>
-
-<!-- Tooltips Flowbite -->
-<div id="tt-pipe-details" role="tooltip"
-     class="absolute z-50 invisible inline-block rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 shadow-sm transition-opacity tooltip">
-  Detalhes do processo
-  <div class="tooltip-arrow" data-popper-arrow></div>
-</div>
-<div id="tt-pipe-config" role="tooltip"
-     class="absolute z-50 invisible inline-block rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 shadow-sm transition-opacity tooltip">
-  Configurações avançadas
-  <div class="tooltip-arrow" data-popper-arrow></div>
-</div>
-<div id="tt-save-template" role="tooltip"
-     class="absolute z-50 invisible inline-block rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 shadow-sm transition-opacity tooltip">
-  Salvar este processo como template
-  <div class="tooltip-arrow" data-popper-arrow></div>
-</div>
-<div id="tt-edit-pipeline" role="tooltip"
-     class="absolute z-50 invisible inline-block rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 shadow-sm transition-opacity tooltip">
-  Editar pipeline
-  <div class="tooltip-arrow" data-popper-arrow></div>
-</div>
-<div id="tt-new-card" role="tooltip"
-     class="absolute z-50 invisible inline-block rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 shadow-sm transition-opacity tooltip">
-  Criar novo card
-  <div class="tooltip-arrow" data-popper-arrow></div>
-</div>
 
 
       <!-- Tooltips (Flowbite) -->
@@ -194,7 +167,7 @@
 
       <div id="tt-edit-pipeline" role="tooltip"
           class="absolute z-50 invisible inline-block rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 shadow-sm transition-opacity tooltip">
-        Editar pipeline
+        Editar processo
         <div class="tooltip-arrow" data-popper-arrow></div>
       </div>
 

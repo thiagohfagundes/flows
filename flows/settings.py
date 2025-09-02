@@ -23,6 +23,7 @@ env.read_env(BASE_DIR / '.env')
 
 INTEGRADOR_APP_TOKEN = env('INTEGRADOR_APP_TOKEN')
 INTEGRADOR_APP_SECRET = env('INTEGRADOR_APP_SECRET')
+IMOBILIARIAS_BASE_URL = env('IMOBILIARIAS_BASE_URL')
 SUPERLOGICA_API_BASE = env('SUPERLOGICA_API_BASE', default='https://api.superlogica.net')
 URL_PARA_APP_TOKEN = env('URL_PARA_APP_TOKEN', default='https://{license}.superlogica.net/clients/financeiro/login')
 SUPERLOGICA_HEALTHCHECK_PATH = env('SUPERLOGICA_HEALTHCHECK_PATH', default='/imobiliarias/v2/clientes?limit=1')
@@ -62,6 +63,7 @@ INSTALLED_APPS = [
     'clientes',
     'kanban_templates',
     'integrador',
+    'importador_erp',
 ]
 
 MIDDLEWARE = [

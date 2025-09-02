@@ -39,4 +39,4 @@ class LicenseIntegration(models.Model):
         verbose_name_plural = "Integrações de Licenças"
 
     def __str__(self):
-        return f"{self.license_name} (ativo={self.is_active})"
+        return f"{self.license} (ativo={self.is_active})"

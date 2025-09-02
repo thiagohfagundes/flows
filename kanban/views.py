@@ -1,6 +1,7 @@
 # kanban/views.py
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponseBadRequest, HttpResponse
+from django.utils.html import escape
 from django.views.decorators.http import require_http_methods
 from django.template.loader import render_to_string
 from django.db import transaction
@@ -8,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.contrib import messages
 from django.db.models import Prefetch
-from .models import Pipeline, Etapa, Card, Tarefa, PipelinePropriedade, Propriedade, STATUS_TAREFA, STATUS_ETAPA, TIPOS_PROPRIEDADE
+from .models import Pipeline, Etapa, Card, Tarefa, PipelinePropriedade, Propriedade, Checklist, STATUS_TAREFA, STATUS_ETAPA, TIPOS_PROPRIEDADE
 
 def home(request):
     return render(request, "kanban/home.html")
@@ -581,4 +582,3 @@ def tarefa_toggle(request, tarefa_id):
     tarefa.data_conclusao = timezone.now() if tarefa.concluido else None
     tarefa.save(update_fields=["concluido", "status", "data_conclusao"])
     return render(request, "kanban/partials/tarefa.html", {"tarefa": tarefa})
-

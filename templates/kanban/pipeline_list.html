@@ -6,13 +6,13 @@
   <!-- Header -->
   <div class="mb-6 flex items-center justify-between">
     <div>
-      <h1 class="text-2xl font-semibold text-gray-900">Pipelines</h1>
-      <p class="text-sm text-gray-500">Gerencie seus pipelines. Crie, acesse e exclua quando necessário.</p>
+      <h1 class="text-2xl font-semibold text-gray-900">Processos</h1>
+      <p class="text-sm text-gray-500">Gerencie seus processos. Crie, acesse e exclua quando necessário.</p>
     </div>
 
     <a href="{% url 'kanban:pipeline_create' %}"
        class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300">
-      + Criar pipeline
+      + Criar processo
     </a>
   </div>
 
@@ -96,11 +96,11 @@
   {% else %}
     <!-- Empty state -->
     <div class="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center">
-      <h3 class="mb-2 text-base font-semibold text-gray-900">Nenhum pipeline ainda</h3>
-      <p class="mb-4 text-sm text-gray-500">Crie seu primeiro pipeline para começar a organizar seus processos.</p>
+      <h3 class="mb-2 text-base font-semibold text-gray-900">Nenhum processo ainda</h3>
+      <p class="mb-4 text-sm text-gray-500">Crie seu primeiro processo para começar a organizar seus fluxos de trabalho.</p>
       <a href="{% url 'kanban:pipeline_create' %}"
          class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300">
-        + Criar pipeline
+        + Criar processo
       </a>
     </div>
   {% endif %}

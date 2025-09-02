@@ -7,4 +7,5 @@ urlpatterns = [
     path('usuarios/', include('clientes.urls')),
     path("kanban-templates/", include("kanban_templates.urls")),
     path('integrador/', include('integrador.urls')),
+    path('importador/', include('importador_erp.urls')),
 ]

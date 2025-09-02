@@ -1,5 +1,10 @@
 from django import forms
-from .models import Checklist, Pipeline  # ajuste o import se o modelo tiver outro nome
+from .models import Pipeline
+
+BASE_INPUT_CLS = "w-full rounded-lg border px-3 py-2"
+BASE_SELECT_CLS = "w-full rounded-lg border px-3 py-2"
+BASE_NUMBER_CLS = "w-32 rounded-lg border px-3 py-2"
+BASE_TEXTAREA_CLS = "w-full rounded-lg border px-3 py-2"
 
 class PipelineForm(forms.ModelForm):
     class Meta:
@@ -14,4 +19,3 @@ class PipelineForm(forms.ModelForm):
                 "class": "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
             }),
         }
-
