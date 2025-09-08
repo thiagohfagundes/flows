@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Meus clientes{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-7xl px-4 py-8">
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-900">Meus clientes</h1>
+      <p class="text-sm text-gray-500">Filtre por tipo, vínculo, valor do aluguel, status e período.</p>
+    </div>
+  </div>
+
+  <!-- filtros -->
+  <form method="get" class="mb-5 grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-6">
+    <div class="md:col-span-2">
+      <label class="mb-1 block text-xs font-medium text-gray-700">Buscar</label>
+      <input name="q" value="{{ request.GET.q }}" placeholder="Nome, e-mail, CPF/CNPJ, telefone"
+             class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Tipo</label>
+      <select name="tipo" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900">
+        <option value="">Todos</option>
+        {% if choices_tipo %}
+          {% for val, label in choices_tipo %}
+            <option value="{{ val }}" {% if request.GET.tipo == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        {% endif %}
+      </select>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Vínculo</label>
+      <select name="vinculo" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900">
+        <option value="">Todos</option>
+        <option value="prop" {% if request.GET.vinculo == 'prop' %}selected{% endif %}>Proprietário</option>
+        <option value="inq" {% if request.GET.vinculo == 'inq' %}selected{% endif %}>Inquilino</option>
+        <option value="semcontrato" {% if request.GET.vinculo == 'semcontrato' %}selected{% endif %}>Sem contrato</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Ativo</label>
+      <select name="ativo" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900">
+        <option value="">Todos</option>
+        <option value="1" {% if request.GET.ativo == '1' %}selected{% endif %}>Sim</option>
+        <option value="0" {% if request.GET.ativo == '0' %}selected{% endif %}>Não</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Status do contrato</label>
+      <input name="status" value="{{ request.GET.status }}"
+             class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900" placeholder="Vigente, Vencido..."/>
+    </div>
+
+    <div class="md:col-span-6 grid grid-cols-1 gap-3 md:grid-cols-5">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Aluguel mínimo</label>
+        <input name="min_aluguel" value="{{ request.GET.min_aluguel }}" type="number" step="0.01"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Aluguel máximo</label>
+        <input name="max_aluguel" value="{{ request.GET.max_aluguel }}" type="number" step="0.01"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Início a partir de</label>
+        <input name="dt_ini" value="{{ request.GET.dt_ini }}" type="date"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Início até</label>
+        <input name="dt_fim" value="{{ request.GET.dt_fim }}" type="date"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Ordenar</label>
+        <select name="ordenar" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900">
+          <option value="nome" {% if request.GET.ordenar == 'nome' or not request.GET.ordenar %}selected{% endif %}>Nome (A→Z)</option>
+          <option value="-nome" {% if request.GET.ordenar == '-nome' %}selected{% endif %}>Nome (Z→A)</option>
+          <option value="-contratos" {% if request.GET.ordenar == '-contratos' %}selected{% endif %}>Mais contratos</option>
+          <option value="contratos" {% if request.GET.ordenar == 'contratos' %}selected{% endif %}>Menos contratos</option>
+          <option value="-aluguel" {% if request.GET.ordenar == '-aluguel' %}selected{% endif %}>Maior aluguel</option>
+          <option value="aluguel" {% if request.GET.ordenar == 'aluguel' %}selected{% endif %}>Menor aluguel</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="md:col-span-6 flex items-center justify-end gap-2">
+      <a href="{% url 'meus_clientes' %}" class="rounded-lg border px-4 py-2 text-sm">Limpar</a>
+      <button class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Filtrar</button>
+    </div>
+  </form>
+
+  {% if clientes %}
+    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-gray-700">
+          <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+            <tr>
+              <th class="px-4 py-3">Nome</th>
+              <th class="px-4 py-3">Tipo</th>
+              <th class="px-4 py-3">E-mail</th>
+              <th class="px-4 py-3">Telefone</th>
+              <th class="px-4 py-3 text-right">Contratos</th>
+              <th class="px-4 py-3 text-right">Aluguel total</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for c in clientes %}
+              <tr class="bg-white">
+                <td class="px-4 py-3 font-medium text-gray-900">{{ c.nome }}</td>
+                <td class="px-4 py-3">{{ c.get_tipo_display }}</td>
+                <td class="px-4 py-3">{{ c.email }}</td>
+                <td class="px-4 py-3">{{ c.telefone }}</td>
+                <td class="px-4 py-3 text-right">
+                  <span class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700">
+                    {{ c.contratos_prop|default:0 }} prop • {{ c.contratos_inq|default:0 }} inq
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right">R$ {{ c.total_aluguel|floatformat:2 }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if is_paginated %}
+      <div class="mt-4 flex items-center justify-between">
+        <p class="text-sm text-gray-500">
+          Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        </p>
+        <div class="inline-flex items-center gap-1">
+          {% if page_obj.has_previous %}
+            <a href="?page=1&{{ querystring }}" class="rounded-lg border px-3 py-1.5 text-sm">« Primeira</a>
+            <a href="?page={{ page_obj.previous_page_number }}&{{ querystring }}" class="rounded-lg border px-3 py-1.5 text-sm">Anterior</a>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&{{ querystring }}" class="rounded-lg border px-3 py-1.5 text-sm">Próxima</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&{{ querystring }}" class="rounded-lg border px-3 py-1.5 text-sm">Última »</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center">
+      <h3 class="mb-2 text-base font-semibold text-gray-900">Nenhum cliente encontrado</h3>
+      <p class="text-sm text-gray-500">Tente ajustar os filtros acima.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

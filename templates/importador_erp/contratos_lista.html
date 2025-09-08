@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}Contratos de locação{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-7xl px-4 py-8">
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-900">Contratos de locação</h1>
+      <p class="text-sm text-gray-500">Busque por imóvel, cliente, datas, aluguel e mais. Use filtros para refinar.</p>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <form method="get" class="mb-5 grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-6">
+    <div class="md:col-span-2">
+      <label class="mb-1 block text-xs font-medium text-gray-700">Buscar</label>
+      <input name="q" value="{{ request.GET.q }}" placeholder="Imóvel, ID contrato, cliente, status..."
+             class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Situação</label>
+      <select name="situacao" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900">
+        <option value="">Todas</option>
+        <option value="vigente" {% if request.GET.situacao == "vigente" %}selected{% endif %}>Vigente</option>
+        <option value="vencido" {% if request.GET.situacao == "vencido" %}selected{% endif %}>Vencido</option>
+        <option value="futuro"  {% if request.GET.situacao == "futuro"  %}selected{% endif %}>Futuro</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Ativo</label>
+      <select name="ativo" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900">
+        <option value="">Todos</option>
+        <option value="1" {% if request.GET.ativo == '1' %}selected{% endif %}>Sim</option>
+        <option value="0" {% if request.GET.ativo == '0' %}selected{% endif %}>Não</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Aluguel garantido</label>
+      <select name="aluguel_garantido" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900">
+        <option value="">Todos</option>
+        <option value="1" {% if request.GET.aluguel_garantido == '1' %}selected{% endif %}>Sim</option>
+        <option value="0" {% if request.GET.aluguel_garantido == '0' %}selected{% endif %}>Não</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Tipo de garantia</label>
+      <input name="tipo_garantia" value="{{ request.GET.tipo_garantia }}"
+             class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900" placeholder="Fiador, Seguro-fiança..."/>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Renovação automática</label>
+      <select name="renovacao" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900">
+        <option value="">Todos</option>
+        <option value="1" {% if request.GET.renovacao == '1' %}selected{% endif %}>Sim</option>
+        <option value="0" {% if request.GET.renovacao == '0' %}selected{% endif %}>Não</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Tipo de imóvel</label>
+      <input name="tipo_imovel" value="{{ request.GET.tipo_imovel }}"
+             class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900" placeholder="Apartamento, Casa..."/>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Tipo de contrato</label>
+      <input name="tipo_contrato" value="{{ request.GET.tipo_contrato }}"
+             class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900" placeholder="Residencial, Comercial..."/>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Status</label>
+      <input name="status" value="{{ request.GET.status }}"
+             class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900" placeholder="Vigente, Vencido..."/>
+    </div>
+
+    <div class="md:col-span-6 grid grid-cols-1 gap-3 md:grid-cols-6">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Aluguel mínimo</label>
+        <input name="min_aluguel" value="{{ request.GET.min_aluguel }}" type="number" step="0.01"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Aluguel máximo</label>
+        <input name="max_aluguel" value="{{ request.GET.max_aluguel }}" type="number" step="0.01"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Início ≥</label>
+        <input name="ini_de" value="{{ request.GET.ini_de }}" type="date"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Início ≤</label>
+        <input name="ini_ate" value="{{ request.GET.ini_ate }}" type="date"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Fim ≥</label>
+        <input name="fim_de" value="{{ request.GET.fim_de }}" type="date"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Fim ≤</label>
+        <input name="fim_ate" value="{{ request.GET.fim_ate }}" type="date"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+      </div>
+    </div>
+
+    <div class="md:col-span-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Filtrar por Inquilino (nome)</label>
+        <input name="inq" value="{{ request.GET.inq }}"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900" placeholder="Ex.: João Silva"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Filtrar por Proprietário (nome)</label>
+        <input name="prop" value="{{ request.GET.prop }}"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900" placeholder="Ex.: Maria Souza"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Ordenar</label>
+        <select name="ordenar" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900">
+          <option value="-data_inicio" {% if request.GET.ordenar == '-data_inicio' or not request.GET.ordenar %}selected{% endif %}>Mais recentes (início)</option>
+          <option value="data_inicio"  {% if request.GET.ordenar == 'data_inicio' %}selected{% endif %}>Mais antigos (início)</option>
+          <option value="-data_fim"    {% if request.GET.ordenar == '-data_fim' %}selected{% endif %}>Fim mais distante</option>
+          <option value="data_fim"     {% if request.GET.ordenar == 'data_fim' %}selected{% endif %}>Fim mais próximo</option>
+          <option value="-valor_aluguel" {% if request.GET.ordenar == '-valor_aluguel' %}selected{% endif %}>Maior aluguel</option>
+          <option value="valor_aluguel"  {% if request.GET.ordenar == 'valor_aluguel' %}selected{% endif %}>Menor aluguel</option>
+          <option value="nome_do_imovel" {% if request.GET.ordenar == 'nome_do_imovel' %}selected{% endif %}>Imóvel (A→Z)</option>
+          <option value="-nome_do_imovel" {% if request.GET.ordenar == '-nome_do_imovel' %}selected{% endif %}>Imóvel (Z→A)</option>
+          <option value="-situacao" {% if request.GET.ordenar == '-situacao' %}selected{% endif %}>Situação (Vigente→Vencido→Futuro)</option>
+          <option value="situacao"  {% if request.GET.ordenar == 'situacao' %}selected{% endif %}>Situação (Futuro→Vigente→Vencido)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="md:col-span-6 flex items-center justify-end gap-2">
+      <a href="{% url 'meus_contratos' %}" class="rounded-lg border px-4 py-2 text-sm">Limpar</a>
+      <button class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Filtrar</button>
+    </div>
+  </form>
+
+  {% if contratos %}
+    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-gray-700">
+          <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+            <tr>
+              <th class="px-4 py-3">Imóvel</th>
+              <th class="px-4 py-3">Início</th>
+              <th class="px-4 py-3">Fim</th>
+              <th class="px-4 py-3 text-right">Aluguel</th>
+              <th class="px-4 py-3">Garantia</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3">Situação</th>
+              <th class="px-4 py-3 text-right">Partes</th>
+              <th class="px-4 py-3 text-right">Ativo</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for c in contratos %}
+              <tr class="bg-white">
+                <td class="px-4 py-3 font-medium text-gray-900">{{ c.nome_do_imovel }}</td>
+                <td class="px-4 py-3">{{ c.data_inicio|date:"d/m/Y" }}</td>
+                <td class="px-4 py-3">{{ c.data_fim|date:"d/m/Y" }}</td>
+                <td class="px-4 py-3 text-right">R$ {{ c.valor_aluguel|floatformat:2 }}</td>
+                <td class="px-4 py-3">
+                  {% if c.aluguel_garantido %}
+                    <span class="rounded-md bg-green-100 px-2 py-1 text-xs text-green-800">Garantido</span>
+                  {% endif %}
+                  {% if c.tipo_garantia %}
+                    <span class="ml-1 rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700">{{ c.tipo_garantia }}</span>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3">{{ c.status_contrato }}</td>
+                <td class="px-4 py-3">
+                  {% if c.situacao == 0 %}
+                    <span class="rounded-md bg-red-100 px-2 py-1 text-xs text-red-700">Vencido</span>
+                  {% elif c.situacao == 1 %}
+                    <span class="rounded-md bg-emerald-100 px-2 py-1 text-xs text-emerald-700">Vigente</span>
+                  {% else %}
+                    <span class="rounded-md bg-blue-100 px-2 py-1 text-xs text-blue-700">Futuro</span>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <span class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700">
+                    {{ c.num_proprietarios }} prop • {{ c.num_inquilinos }} inq
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  {% if c.contrato_ativo %}
+                    <span class="rounded-md bg-green-100 px-2 py-1 text-xs text-green-800">Sim</span>
+                  {% else %}
+                    <span class="rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600">Não</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if is_paginated %}
+      <div class="mt-4 flex items-center justify-between">
+        <p class="text-sm text-gray-500">
+          Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        </p>
+        <div class="inline-flex items-center gap-1">
+          {% if page_obj.has_previous %}
+            <a href="?page=1&{{ querystring }}" class="rounded-lg border px-3 py-1.5 text-sm">« Primeira</a>
+            <a href="?page={{ page_obj.previous_page_number }}&{{ querystring }}" class="rounded-lg border px-3 py-1.5 text-sm">Anterior</a>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&{{ querystring }}" class="rounded-lg border px-3 py-1.5 text-sm">Próxima</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&{{ querystring }}" class="rounded-lg border px-3 py-1.5 text-sm">Última »</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center">
+      <h3 class="mb-2 text-base font-semibold text-gray-900">Nenhum contrato encontrado</h3>
+      <p class="text-sm text-gray-500">Tente ajustar os filtros acima.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

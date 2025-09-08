@@ -34,19 +34,70 @@ def _from_map(m: dict, key, default=""):
 def _to_bool(v) -> bool:
     return str(v).strip() not in ("", "0", "False", "false", "None", "null")
 
-def _upsert_cliente(nome: str | None, documento: str | None):
+
+def _email_placeholder(nome: str, ident: str | int) -> str:
+    base = re.sub(r"[^a-z0-9]+", "-", (nome or "").lower()).strip("-") or "sem-nome"
+    return f"noemail-{base}-{ident}@invalid.local"
+
+def _ident_from(d: dict) -> int | None:
+    # cobre variações comuns de chaves nos payloads
+    for k in [
+        "id_pessoa_pes",
+        "id_proprietario_pes",
+        "id_inquilino_pes",
+        "id_pessoa",
+        "id_cliente_pes",
+        "id_pessoainquilino_pes",
+    ]:
+        v = d.get(k)
+        if v not in (None, "", 0, "0"):
+            try:
+                return int(str(v))
+            except Exception:
+                pass
+    return None
+
+def _upsert_cliente(nome: str | None, documento: str | None, tipo: str, ident_pessoa: int | None) -> Cliente:
     """
-    Tenta identificar por documento; se não houver, usa nome.
-    Ajuste os campos de Cliente conforme seu modelo (ex.: cpf_cnpj/documento).
+    Usa 'identificador_pessoa' (ID do Superlógica) como chave principal.
+    'cpf_cnpj' é mantido/atualizado como dado secundário.
     """
+    if not ident_pessoa:
+        # Sem ID não dá pra garantir unicidade → melhor pular ou logar
+        # Você pode levantar uma exceção específica se preferir.
+        raise ValueError("ident_pessoa ausente para cliente")
+
     nome = (nome or "").strip() or "Sem nome"
-    if documento:
-        obj, _ = Cliente.objects.get_or_create(documento=documento, defaults={"nome": nome})
-        if obj.nome != nome:
-            obj.nome = nome
-            obj.save(update_fields=["nome"])
-        return obj
-    obj, _ = Cliente.objects.get_or_create(nome=nome)
+    cpf_cnpj = _digits(documento)
+    ident_para_email = str(ident_pessoa)
+
+    defaults = dict(
+        identificador_pessoa=ident_pessoa,
+        cpf_cnpj=cpf_cnpj,
+        rg="",
+        sexo="I",
+        nome=nome,
+        email=_email_placeholder(nome, ident_para_email),
+        telefone="",
+        tipo=tipo,
+    )
+
+    obj, created = Cliente.objects.get_or_create(
+        identificador_pessoa=ident_pessoa,
+        defaults=defaults,
+    )
+
+    # atualizações mínimas sem sobrescrever à toa
+    changed = False
+    if cpf_cnpj and obj.cpf_cnpj != cpf_cnpj:
+        obj.cpf_cnpj = cpf_cnpj; changed = True
+    if obj.nome != nome:
+        obj.nome = nome; changed = True
+    if obj.tipo != tipo:
+        obj.tipo = tipo; changed = True
+    if changed:
+        obj.save(update_fields=["cpf_cnpj", "nome", "tipo"])
+
     return obj
 
 # --------- mapeamento e persistência ---------
@@ -54,7 +105,7 @@ def salvar_contrato(item: dict, licenca: ClienteLicense) -> ContratoLocacao:
     ident = int(item["id_contrato_con"])
 
     contrato, _ = ContratoLocacao.objects.update_or_create(
-        licenca=licenca,                           # <<--- usa a FK aqui
+        licenca=licenca,
         identificador_contrato=ident,
         defaults={
             "nome_do_imovel": item.get("st_imovel_imo") or item.get("st_endereco_imo") or "",
@@ -81,14 +132,29 @@ def salvar_contrato(item: dict, licenca: ClienteLicense) -> ContratoLocacao:
         },
     )
 
-    proprietarios = [
-        _upsert_cliente(p.get("st_nome_pes") or p.get("st_fantasia_pes"), p.get("st_cnpj_pes"))
-        for p in item.get("proprietarios_beneficiarios", [])
-    ]
-    inquilinos = [
-        _upsert_cliente(i.get("st_nomeinquilino") or i.get("st_fantasia_pes"), i.get("st_cnpj_pes"))
-        for i in item.get("inquilinos", [])
-    ]
+    proprietarios = []
+    for p in item.get("proprietarios_beneficiarios", []):
+        ident_pessoa = _ident_from(p)
+        proprietarios.append(
+            _upsert_cliente(
+                p.get("st_nome_pes") or p.get("st_fantasia_pes"),
+                p.get("st_cnpj_pes"),
+                tipo="PROPRIETARIO",
+                ident_pessoa=ident_pessoa,
+            )
+        )
+
+    inquilinos = []
+    for i in item.get("inquilinos", []):
+        ident_pessoa = _ident_from(i)
+        inquilinos.append(
+            _upsert_cliente(
+                i.get("st_nomeinquilino") or i.get("st_fantasia_pes"),
+                i.get("st_cnpj_pes"),
+                tipo="INQUILINO",
+                ident_pessoa=ident_pessoa,
+            )
+        )
 
     contrato.proprietarios.set(proprietarios or [])
     contrato.inquilinos.set(inquilinos or [])
