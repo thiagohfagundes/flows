@@ -1,0 +1,18 @@
+<div id="chips-clientes-{{ card.id }}" class="flex flex-wrap gap-2">
+  {% for c in card.clientes_associados.all %}
+    <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs text-amber-800 border border-amber-200">
+      {{ c.nome }}
+      <button
+        class="ml-1 rounded-full p-0.5 hover:bg-amber-100"
+        title="Remover"
+        hx-post="{% url 'kanban:card_rm_cliente' card.id c.id %}"
+        hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+        hx-target="#chips-clientes-{{ card.id }}"
+        hx-swap="outerHTML">
+        ✕
+      </button>
+    </span>
+  {% empty %}
+    <span class="text-xs text-gray-500">Nenhum cliente associado.</span>
+  {% endfor %}
+</div>

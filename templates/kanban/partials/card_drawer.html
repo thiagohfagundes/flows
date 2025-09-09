@@ -1,74 +1,62 @@
-<!-- header simples -->
-<div class="mb-2 flex items-start justify-between">
+<!-- HEADER -->
+<div class="mb-4 flex items-start justify-between">
   <div class="space-y-1">
-    <h4 class="text-lg font-semibold text-gray-900">{{ card.titulo }}</h4>
-    {% if card.etapa %}<p class="text-xs text-gray-500">Etapa: {{ card.etapa.nome }}</p>{% endif %}
-    {% if card.pipeline %}<p class="text-xs text-gray-500">Pipeline: {{ card.pipeline.nome }}</p>{% endif %}
+    <h4 class="text-lg font-semibold text-gray-900 leading-tight">{{ card.titulo }}</h4>
+
+    <div class="flex flex-wrap gap-2">
+      {% if card.etapa %}
+        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700">
+          Etapa: {{ card.etapa.nome }}
+        </span>
+      {% endif %}
+      {% if card.pipeline %}
+        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700">
+          Pipeline: {{ card.pipeline.nome }}
+        </span>
+      {% endif %}
+      <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs text-blue-700">
+        ID: #{{ card.id }}
+      </span>
+    </div>
   </div>
 
   <a href="{% url 'kanban:card_detail' card.id %}"
-     class="text-sm text-blue-600 hover:underline"
      target="_blank" rel="noopener">
     Ver em tela cheia ↗
   </a>
 </div>
 
 {% if card.descricao %}
-  <div class="mt-4">
+  <div class="mt-3">
     <h5 class="mb-1 text-sm font-medium text-gray-900">Descrição</h5>
     <p class="text-sm text-gray-700 whitespace-pre-line">{{ card.descricao }}</p>
   </div>
 {% endif %}
 
-<!-- Progresso -->
-<div class="mt-4 flex items-center gap-2 text-sm text-gray-600">
-  <span class="inline-flex items-center gap-1">
-    <svg class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 10-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z"/></svg>
-    {{ done }}/{{ total }} tarefas concluídas
-  </span>
+<!-- PROGRESSO -->
+<div class="mt-4">
+  <div class="flex items-center justify-between text-sm text-gray-600 mb-1">
+    <span>Tarefas concluídas</span>
+    <span class="font-medium">{{ done }}/{{ total }}</span>
+  </div>
+  <!-- progress nativo evita precisar calcular % no template -->
+  <progress value="{{ done }}" max="{{ total|default:1 }}"
+            class="w-full h-2 align-middle"></progress>
 </div>
 
-<!-- Tarefas -->
-<div class="mt-4">
-  <h5 class="mb-2 text-sm font-medium text-gray-900">Tarefas</h5>
-
-  <div id="tarefas-{{ card.id }}" class="space-y-2">
-    {% for t in card.tarefas.all %}
-      <div id="tarefa-{{ t.id }}" class="flex items-start justify-between rounded-lg border border-gray-200 p-2">
-        <label class="flex items-center gap-2 text-sm text-gray-800">
-          <input type="checkbox" {% if t.concluido %}checked{% endif %}
-                 hx-post="{% url 'kanban:tarefa_toggle' t.id %}"
-                 hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
-                 hx-target="#tarefa-{{ t.id }}" hx-swap="outerHTML">
-          <span class="{% if t.concluido %}line-through text-gray-400{% endif %}">{{ t.titulo }}</span>
-        </label>
-      </div>
-    {% empty %}
-      <p class="text-xs text-gray-500">Sem tarefas ainda.</p>
-    {% endfor %}
+<!-- PROPRIEDADES (ANTES DAS TAREFAS) -->
+<div class="mt-6">
+  <div class="mb-2 flex items-center justify-between">
+    <h5 class="text-sm font-medium text-gray-900">Propriedades</h5>
+    <span class="text-xs text-gray-500">salva automaticamente</span>
   </div>
 
-  <!-- Nova tarefa -->
-  <form class="mt-3"
-        hx-post="{% url 'kanban:tarefa_create' card.id %}"
-        hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
-        hx-target="#tarefas-{{ card.id }}" hx-swap="beforeend">
-    <div class="flex items-center gap-2">
-      <input type="text" name="titulo" placeholder="nova tarefa..."
-             class="block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500" required>
-      <button type="submit"
-              class="rounded-md border border-gray-200 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50">adicionar</button>
-    </div>
-  </form>
-</div>
-
-<!-- Propriedades -->
-<div class="mt-4">
-  <h5 class="mb-2 text-sm font-medium text-gray-900">Propriedades</h5>
-
-  <form hx-post="{% url 'kanban:card_props_update' card.id %}"
+  <form
+      hx-post="{% url 'kanban:card_props_update' card.id %}"
       hx-trigger="change delay:400ms from:input, change from:select"
-      hx-target="#card-drawer-body" hx-swap="none" class="space-y-3">
+      hx-target="#card-drawer-body"
+      hx-swap="none"
+      class="grid grid-cols-1 gap-3">
 
     {% csrf_token %}
 
@@ -122,3 +110,117 @@
   </form>
 </div>
 
+<!-- RELACIONAMENTOS -->
+<div class="mt-6">
+  <h5 class="mb-2 text-sm font-medium text-gray-900">Relacionamentos</h5>
+
+  <!-- Clientes associados -->
+  <div class="mb-4 rounded-lg border border-gray-200 bg-white p-3">
+    <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Clientes</div>
+
+    {% include "kanban/partials/chips_clientes.html" with card=card %}
+
+    <div class="mt-2">
+      <div class="relative">
+        <input type="search" name="q" placeholder="Buscar cliente por nome, e-mail, CPF/CNPJ…"
+               hx-get="{% url 'kanban:card_buscar_clientes' card.id %}"
+               hx-trigger="keyup changed delay:400ms"
+               hx-target="#resultados-clientes-{{ card.id }}"
+               class="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500" />
+        <div id="resultados-clientes-{{ card.id }}" class="mt-2 rounded-md border border-gray-200 bg-white shadow-sm"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contratos associados -->
+  <div class="rounded-lg border border-gray-200 bg-white p-3">
+    <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Contratos</div>
+
+    {% include "kanban/partials/chips_contratos.html" with card=card %}
+
+    <div class="mt-2">
+      <div class="relative">
+        <input type="search" name="q" placeholder="Buscar contrato por imóvel, ID, partes…"
+               hx-get="{% url 'kanban:card_buscar_contratos' card.id %}"
+               hx-trigger="keyup changed delay:400ms"
+               hx-target="#resultados-contratos-{{ card.id }}"
+               class="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500" />
+        <div id="resultados-contratos-{{ card.id }}" class="mt-2 rounded-md border border-gray-200 bg-white shadow-sm"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAREFAS -->
+<div class="mt-6">
+  <div class="mb-2 flex items-center justify-between">
+    <h5 class="text-sm font-medium text-gray-900">Tarefas</h5>
+    <span class="text-xs text-gray-500">marque para concluir</span>
+  </div>
+
+  <div id="tarefas-{{ card.id }}" class="space-y-2">
+    {% for t in card.tarefas.all %}
+      <div id="tarefa-{{ t.id }}" class="flex items-start justify-between rounded-lg border border-gray-200 bg-white p-2">
+        <label class="flex items-center gap-2 text-sm text-gray-800">
+          <input type="checkbox" {% if t.concluido %}checked{% endif %}
+                 hx-post="{% url 'kanban:tarefa_toggle' t.id %}"
+                 hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+                 hx-target="#tarefa-{{ t.id }}" hx-swap="outerHTML">
+          <span class="{% if t.concluido %}line-through text-gray-400{% endif %}">{{ t.titulo }}</span>
+        </label>
+      </div>
+    {% empty %}
+      <p class="text-xs text-gray-500">Sem tarefas ainda.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Nova tarefa -->
+  <form class="mt-3"
+        hx-post="{% url 'kanban:tarefa_create' card.id %}"
+        hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+        hx-target="#tarefas-{{ card.id }}" hx-swap="beforeend"
+        hx-on::after-request="this.reset()">
+    <div class="flex items-center gap-2">
+      <input type="text" name="titulo" placeholder="Nova tarefa…"
+             class="block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500" required>
+      <button type="submit"
+              class="rounded-md border border-gray-200 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50">Adicionar</button>
+    </div>
+  </form>
+</div>
+
+<!-- COMENTÁRIOS -->
+<div class="mt-8">
+  <h5 class="mb-2 text-sm font-medium text-gray-900">Comentários</h5>
+
+  <!-- Form novo comentário -->
+  <form
+      hx-post="{% url 'kanban:comentario_create' card.id %}"
+      hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+      hx-target="#comentarios-list-{{ card.id }}"
+      hx-swap="afterbegin"
+      hx-on::after-request="this.reset()">
+    <div class="rounded-lg border border-gray-200 bg-white p-3">
+      <textarea name="conteudo" rows="3" placeholder="Escreva um comentário…"
+                class="w-full resize-y rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                required></textarea>
+      <div class="mt-2 flex items-center justify-between">
+        <div class="text-xs text-gray-500">
+          Postando como <span class="font-medium text-gray-700">{{ request.user.username }}</span>
+        </div>
+        <button class="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700">
+          Comentar
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Lista de comentários -->
+  <div id="comentarios-list-{{ card.id }}" class="mt-3 space-y-3">
+    {% for c in card.comentarios.all|dictsortreversed:"criado_em" %}
+      {% include "kanban/partials/comentario_item.html" with c=c only %}
+    {% empty %}
+      <p class="text-xs text-gray-500">Ainda não há comentários.</p>
+    {% endfor %}
+  </div>
+</div>

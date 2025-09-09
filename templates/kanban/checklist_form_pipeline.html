@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Novo checklist{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-6xl px-4 py-8">
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-gray-900">Novo checklist</h1>
+    <p class="text-sm text-gray-500">Pipeline: <span class="font-medium text-gray-900">{{ pipeline.nome }}</span></p>
+  </div>
+
+  <form method="post" class="space-y-6" id="checklist-form">
+    {% csrf_token %}
+
+    <!-- Cabeçalho -->
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="md:col-span-2">
+          <label class="mb-2 block text-sm font-medium text-gray-900">Nome</label>
+          {{ form.nome }}
+        </div>
+        <div class="md:col-span-2">
+          <label class="mb-2 block text-sm font-medium text-gray-900">Descrição</label>
+          {{ form.descricao }}
+        </div>
+      </div>
+      {% if form.non_field_errors %}<p class="mt-2 text-sm text-red-600">{{ form.non_field_errors.0 }}</p>{% endif %}
+    </div>
+
+    <!-- Itens -->
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Itens do checklist</h2>
+        <button type="button"
+                class="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                hx-get="{% url 'kanban:checklist_item_vazio' %}?index={{ formset.total_form_count }}&pipeline_id={{ pipeline.id }}"
+                hx-target="#itens-rows"
+                hx-swap="beforeend"
+                hx-on::after-request="window.formsetRenumber(); window.renderPreview();">
+          + Adicionar item
+        </button>
+      </div>
+
+      <div id="mgmt" class="hidden">
+        {{ formset.management_form }}
+      </div>
+
+      <div id="itens-rows" class="space-y-3">
+        {% for f in formset.forms %}
+          {% include "kanban/partials/_item_form_row.html" with form=f index=forloop.counter0 %}
+        {% empty %}{% endfor %}
+      </div>
+
+      <p class="mt-3 text-xs text-gray-500">Dica: arraste os cards pelo “⋮⋮” para ordenar.</p>
+    </div>
+
+    <!-- Preview por etapa -->
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 class="mb-4 text-lg font-semibold text-gray-900">Visualização do processo</h2>
+      <div id="preview-columns" class="grid gap-4 md:grid-cols-{{ etapas|length|default:1 }}">
+        {% for e in etapas %}
+          <div class="rounded-xl border border-gray-100 bg-gray-50 p-4" data-preview-col="{{ e.id }}">
+            <div class="mb-2 flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-gray-800">{{ e.nome }}</h3>
+              <span class="text-xs text-gray-500" data-count>0 itens</span>
+            </div>
+            <ul class="space-y-2 text-sm text-gray-700" data-list></ul>
+          </div>
+        {% empty %}
+          <p class="text-sm text-gray-500">Este pipeline ainda não possui etapas.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-3">
+      <a href="{% url 'kanban:pipeline_detail' pipeline.pk %}" class="rounded-lg border px-4 py-2 text-sm">Cancelar</a>
+      <button class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">Salvar checklist</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // renumera os índices do formset conforme a ordem visual
+  window.formsetRenumber = function() {
+    const container = document.getElementById('itens-rows');
+    const rows = container.querySelectorAll('[data-item-row]');
+    const totalInput = document.querySelector('#mgmt input[name$="TOTAL_FORMS"]');
+    rows.forEach((row, idx) => {
+      row.querySelectorAll('[name]').forEach(el => el.name = el.name.replace(/itens-\d+-/g, `itens-${idx}-`));
+      row.querySelectorAll('[id]').forEach(el => el.id = el.id.replace(/id_itens-\d+-/g, `id_itens-${idx}-`));
+      row.querySelectorAll('label[for]').forEach(lb => lb.htmlFor = lb.htmlFor.replace(/id_itens-\d+-/g, `id_itens-${idx}-`));
+    });
+    if (totalInput) totalInput.value = String(rows.length);
+  };
+
+  // drag & drop
+  (function() {
+    const container = document.getElementById('itens-rows');
+    if (!container || !window.Sortable) return;
+    new Sortable(container, {
+      animation: 150,
+      handle: '[data-drag-handle]',
+      onUpdate: () => { window.formsetRenumber(); window.renderPreview(); }
+    });
+  })();
+
+  // preview em tempo real
+  window.renderPreview = function() {
+    const cols = document.querySelectorAll('[data-preview-col]');
+    cols.forEach(col => { col.querySelector('[data-list]').innerHTML = ''; col.querySelector('[data-count]').textContent = '0 itens'; });
+
+    const rows = document.querySelectorAll('[data-item-row]');
+    rows.forEach(row => {
+      const del = row.querySelector('[data-delete-flag]');
+      if (del && del.checked) return;
+
+      const etapaSelect = row.querySelector('select[name$="-vinculado_a_etapa"]');
+      const tituloInput = row.querySelector('input[name$="-titulo"]');
+      const obrig = row.querySelector('input[name$="-obrigatorio"]');
+      const aprov = row.querySelector('input[name$="-requer_aprovacao"]');
+
+      const etapaId = etapaSelect && etapaSelect.value ? etapaSelect.value : null;
+      if (!etapaId) return;
+
+      const col = document.querySelector(`[data-preview-col="${etapaId}"]`);
+      if (!col) return;
+
+      const list = col.querySelector('[data-list]');
+      const li = document.createElement('li');
+      li.className = 'rounded-md border border-gray-200 bg-white px-3 py-2';
+      const flags = [
+        obrig && obrig.checked ? 'Obrigatório' : null,
+        aprov && aprov.checked ? 'Aprovação' : null
+      ].filter(Boolean);
+      li.innerHTML = `<div class="flex items-center justify-between">
+                        <span>${tituloInput ? (tituloInput.value || '(sem título)') : '(sem título)'}</span>
+                        ${flags.length ? `<span class="text-xs text-gray-500">${flags.join(' • ')}</span>` : ''}
+                      </div>`;
+      list.appendChild(li);
+      const count = list.querySelectorAll('li').length;
+      col.querySelector('[data-count]').textContent = count + (count === 1 ? ' item' : ' itens');
+    });
+  };
+
+  document.addEventListener('input', (e) => { if (e.target.closest('[data-item-row]')) window.renderPreview(); });
+  document.addEventListener('change', (e) => { if (e.target.closest('[data-item-row]')) window.renderPreview(); });
+  window.renderPreview();
+</script>
+{% endblock %}

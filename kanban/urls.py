@@ -35,4 +35,21 @@ urlpatterns = [
     #propriedades
     path("cards/<int:card_id>/props/", views.card_props_update, name="card_props_update"),
     path("pipelines/create/prop-row/", views.pipeline_create_prop_row, name="pipeline_create_prop_row"),
+
+    # checklists
+    path("pipelines/<int:pipeline_id>/checklists/novo/", views.checklist_create_in_pipeline, name="checklist_create_in_pipeline"),
+    path("checklists/item-empty/", views.checklist_item_empty_row, name="checklist_item_vazio"),
+
+    # comentários
+    path("cards/<int:card_id>/comentarios/novo/", views.comentario_create, name="comentario_create"),
+
+    # Busca (GET, retorna lista parcial)
+    path("cards/<int:card_id>/buscar-clientes/", views.card_buscar_clientes, name="card_buscar_clientes"),
+    path("cards/<int:card_id>/buscar-contratos/", views.card_buscar_contratos, name="card_buscar_contratos"),
+
+    # Adição/remoção (POST) de vínculos
+    path("cards/<int:card_id>/add-cliente/<int:cliente_id>/", views.card_add_cliente, name="card_add_cliente"),
+    path("cards/<int:card_id>/rm-cliente/<int:cliente_id>/", views.card_rm_cliente, name="card_rm_cliente"),
+    path("cards/<int:card_id>/add-contrato/<int:contrato_id>/", views.card_add_contrato, name="card_add_contrato"),
+    path("cards/<int:card_id>/rm-contrato/<int:contrato_id>/", views.card_rm_contrato, name="card_rm_contrato"),
 ]

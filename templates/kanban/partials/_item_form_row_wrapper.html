@@ -1,0 +1,10 @@
+{{ row_html|safe }}
+<script>
+  (function() {
+    // incrementa TOTAL_FORMS do formset
+    const total = document.querySelector('#mgmt input[name$="TOTAL_FORMS"]');
+    if (total) {
+      total.value = String(parseInt(total.value || "0", 10) + 1);
+    }
+  })();
+</script>

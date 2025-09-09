@@ -9,7 +9,10 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.contrib import messages
 from django.db.models import Prefetch
-from .models import Pipeline, Etapa, Card, Tarefa, PipelinePropriedade, Propriedade, Checklist, STATUS_TAREFA, STATUS_ETAPA, TIPOS_PROPRIEDADE
+from django.db.models import Max, Q
+from .models import Pipeline, Etapa, Card, Tarefa, PipelinePropriedade, Propriedade, Checklist, ChecklistItem, Comentario, STATUS_TAREFA, STATUS_ETAPA, TIPOS_PROPRIEDADE
+from .forms import ChecklistForm, ChecklistItemFormSet, ChecklistItemForm
+from importador_erp.models import Cliente, ContratoLocacao
 
 def home(request):
     return render(request, "kanban/home.html")
@@ -582,3 +585,171 @@ def tarefa_toggle(request, tarefa_id):
     tarefa.data_conclusao = timezone.now() if tarefa.concluido else None
     tarefa.save(update_fields=["concluido", "status", "data_conclusao"])
     return render(request, "kanban/partials/tarefa.html", {"tarefa": tarefa})
+
+# ------------------------- CHECKLISTS -------------------------
+
+def _next_ordem_for_checklist_in_pipeline(pipeline):
+    # pega o maior 'ordem' entre os checklists desse pipeline e soma 1
+    last = Checklist.objects.filter(pipeline=pipeline).aggregate(m=Max("ordem"))["m"]
+    return (last or 0) + 1
+
+@login_required
+def checklist_create_in_pipeline(request, pipeline_id):
+    pipeline = get_object_or_404(Pipeline, pk=pipeline_id)
+
+    if request.method == "POST":
+        form = ChecklistForm(request.POST)
+        formset = ChecklistItemFormSet(request.POST, prefix="itens",
+                                       form_kwargs={"pipeline": pipeline})
+        if form.is_valid() and formset.is_valid():
+            checklist = form.save(commit=False)
+            checklist.pipeline = pipeline
+            checklist.criado_por = request.user
+            checklist.ordem = _next_ordem_for_checklist_in_pipeline(pipeline)
+            checklist.save()
+
+            # salva itens na ordem dos forms (definida pelo drag & drop)
+            idx = 0
+            instances = formset.save(commit=False)
+            for f in formset.forms:
+                if f.cleaned_data and not f.cleaned_data.get("DELETE"):
+                    item = f.save(commit=False)
+                    item.checklist = checklist
+                    idx += 1
+                    item.ordem = idx
+                    item.save()
+                    f.save_m2m()
+            for obj in formset.deleted_objects:
+                obj.delete()
+
+            return redirect("kanban:pipeline_detail", pipeline_id=pipeline.pk)
+    else:
+        form = ChecklistForm()
+        formset = ChecklistItemFormSet(prefix="itens",
+                                       form_kwargs={"pipeline": pipeline})
+
+    etapas = Etapa.objects.filter(pipelines=pipeline).order_by("posicao","id")
+
+    return render(request, "kanban/checklist_form_pipeline.html", {
+        "form": form,
+        "formset": formset,
+        "pipeline": pipeline,
+        "etapas": etapas,
+    })
+
+@login_required
+def checklist_item_empty_row(request):
+    # recebe index e pipeline_id para filtrar o select de etapas
+    try:
+        index = int(request.GET.get("index", "0"))
+    except ValueError:
+        return HttpResponseBadRequest("index inválido")
+    pipeline = get_object_or_404(Pipeline, pk=request.GET.get("pipeline_id"))
+
+    form = ChecklistItemForm(prefix=f"itens-{index}", pipeline=pipeline)
+
+    html = render_to_string("kanban/partials/_item_form_row.html", {
+        "form": form,
+        "index": index,
+    }, request=request)
+
+    return render(request, "kanban/partials/_item_form_row_wrapper.html", {
+        "row_html": html,
+        "index": index,
+    })
+
+# ------------------------- COMENTÁRIOS -------------------------
+
+@login_required
+@require_http_methods(["POST"])
+def comentario_create(request, card_id):
+    card = get_object_or_404(Card, pk=card_id)
+    conteudo = (request.POST.get("conteudo") or "").strip()
+    if not conteudo:
+        return HttpResponseBadRequest("Comentário vazio.")
+
+    c = Comentario.objects.create(
+        conteudo=conteudo,
+        criado_por=request.user,
+        card=card,
+    )
+    # Retorna apenas o item do comentário para o HTMX inserir
+    return render(request, "kanban/partials/comentario_item.html", {"c": c})
+
+# ------------------------- ASSOCIAR CLIENTES E CONTRATOS -------------------------
+
+@login_required
+def card_buscar_clientes(request, card_id):
+    get_object_or_404(Card, pk=card_id)  # valida card
+    q = (request.GET.get("q") or "").strip()
+    qs = Cliente.objects.all()
+    if q:
+        qs = qs.filter(
+            Q(nome__icontains=q) |
+            Q(email__icontains=q) |
+            Q(cpf_cnpj__icontains=q) |
+            Q(telefone__icontains=q)
+        )
+    qs = qs.order_by("nome")[:20]  # limita 20 para não pesar
+    return render(request, "kanban/partials/busca_resultados_clientes.html", {"resultados": qs, "card_id": card_id})
+
+@login_required
+def card_buscar_contratos(request, card_id):
+    get_object_or_404(Card, pk=card_id)
+    q = (request.GET.get("q") or "").strip()
+    qs = ContratoLocacao.objects.all()
+    if q:
+        qs = qs.filter(
+            Q(nome_do_imovel__icontains=q) |
+            Q(identificador_contrato__icontains=q) |
+            Q(status_contrato__icontains=q) |
+            Q(tipo_imovel__icontains=q) |
+            Q(tipo_contrato__icontains=q) |
+            Q(inquilinos__nome__icontains=q) |
+            Q(proprietarios__nome__icontains=q)
+        )
+    qs = qs.distinct().order_by("-data_inicio")[:20]
+    return render(request, "kanban/partials/busca_resultados_contratos.html", {"resultados": qs, "card_id": card_id})
+
+@login_required
+@require_http_methods(["POST"])
+def card_add_cliente(request, card_id, cliente_id):
+    card = get_object_or_404(Card, pk=card_id)
+    cliente = get_object_or_404(Cliente, pk=cliente_id)
+    card.clientes_associados.add(cliente)
+    # retorna o bloco de chips atualizado
+    return render(request, "kanban/partials/chips_clientes.html", {"card": card})
+
+@login_required
+@require_http_methods(["POST"])
+def card_rm_cliente(request, card_id, cliente_id):
+    card = get_object_or_404(Card, pk=card_id)
+    cliente = get_object_or_404(Cliente, pk=cliente_id)
+    card.clientes_associados.remove(cliente)
+    return render(request, "kanban/partials/chips_clientes.html", {"card": card})
+
+@login_required
+@require_http_methods(["POST"])
+def card_add_contrato(request, card_id, contrato_id):
+    card = get_object_or_404(Card, pk=card_id)
+    contrato = get_object_or_404(ContratoLocacao, pk=contrato_id)
+    card.contratos_locacao.add(contrato)
+
+    # 🔁 recarrega com o M2M atualizado
+    card = Card.objects.prefetch_related("contratos_locacao").get(pk=card.pk)
+
+    # (opcional) debug: conte quantos vínculos existem e exponha num header
+    response = render(request, "kanban/partials/chips_contratos.html", {"card": card})
+    response["X-Contracts-Count"] = str(card.contratos_locacao.count())
+    return response
+
+@login_required
+@require_http_methods(["POST"])
+def card_rm_contrato(request, card_id, contrato_id):
+    card = get_object_or_404(Card, pk=card_id)
+    contrato = get_object_or_404(ContratoLocacao, pk=contrato_id)
+    card.contratos_locacao.remove(contrato)
+    card = Card.objects.prefetch_related("contratos_locacao").get(pk=card.pk)
+    response = render(request, "kanban/partials/chips_contratos.html", {"card": card})
+    response["X-Contracts-Count"] = str(card.contratos_locacao.count())
+    return response

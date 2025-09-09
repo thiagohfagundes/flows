@@ -1,6 +1,8 @@
 from time import timezone
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from importador_erp.models import Cliente, ContratoLocacao
 
 # Create your models here.
 STATUS_ETAPA = (
@@ -59,6 +61,8 @@ class Card(models.Model):
     pipeline = models.ForeignKey(Pipeline, on_delete=models.CASCADE, related_name='cards', blank=True, null=True)
     criado_por = models.ForeignKey(User, on_delete=models.CASCADE)
     atribuido_a = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cards_atribuidos', blank=True, null=True)
+    clientes_associados = models.ManyToManyField(Cliente, blank=True, related_name='cards')
+    contratos_locacao = models.ManyToManyField(ContratoLocacao, blank=True, related_name='cards')
 
     def __str__(self):
         return self.titulo
@@ -104,24 +108,14 @@ class Checklist(models.Model):
     nome        = models.CharField(max_length=120)
     descricao   = models.TextField(blank=True, null=True)
     pipeline    = models.ForeignKey('Pipeline', on_delete=models.CASCADE, related_name='checklists', null=True, blank=True)
-    etapa       = models.ForeignKey('Etapa', on_delete=models.CASCADE, related_name='checklists', null=True, blank=True)
     ordem       = models.PositiveIntegerField(default=0)
     criado_por  = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
         ordering = ["ordem", "id"]
 
-    def clean(self):
-        # Garantia cross-DB: exatamente um âncora
-        has_pipe = bool(self.pipeline_id)
-        has_stage = bool(self.etapa_id)
-        if has_pipe == has_stage:
-            from django.core.exceptions import ValidationError
-            raise ValidationError("Checklist deve estar vinculada ao pipeline OU à etapa (exclusivo).")
-
     def __str__(self):
-        target = self.pipeline or self.etapa
-        return f"{self.nome} → {target}"
+        return f"{self.nome} → {self.pipeline}"
 
 class ChecklistItem(models.Model):
     checklist   = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name='itens')
@@ -129,6 +123,7 @@ class ChecklistItem(models.Model):
     descricao   = models.TextField(blank=True, null=True)
     obrigatorio = models.BooleanField(default=False)
     ordem       = models.PositiveIntegerField(default=0)
+    vinculado_a_etapa       = models.ForeignKey('Etapa', on_delete=models.CASCADE, related_name='checklists', null=True, blank=True)
     # Campos extras úteis:
     prazo_dias  = models.IntegerField(blank=True, null=True)   # prazo relativo ao nascimento do card
     atribuido_a = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='itens_checklist_atribuidos')
@@ -171,3 +166,12 @@ class Tarefa(models.Model):
     def reabrir(self):
         self.status = 'ABERTO'
         self.save()
+
+class Comentario(models.Model):
+    conteudo = models.TextField()
+    criado_em = models.DateTimeField(auto_now_add=True)
+    criado_por = models.ForeignKey(User, on_delete=models.CASCADE)
+    card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name='comentarios')
+
+    def __str__(self):
+        return f"Comentário por {self.criado_por} em {self.criado_em}"

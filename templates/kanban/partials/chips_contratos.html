@@ -1,0 +1,22 @@
+<!-- templates/kanban/partials/chips_contratos.html -->
+<div id="chips-contratos-{{ card.id }}" class="flex flex-wrap gap-2">
+  {% for ct in card.contratos_locacao.all %}
+    <span class="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs text-indigo-800">
+      <!-- nome do imóvel + id contrato -->
+      {{ ct.nome_do_imovel }} ({{ ct.identificador_contrato }})
+
+      <!-- botão de remover -->
+      <button type="button"
+              class="ml-1 rounded-full p-0.5 hover:bg-indigo-100"
+              title="Remover contrato"
+              hx-post="{% url 'kanban:card_rm_contrato' card.id ct.id %}"
+              hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+              hx-target="#chips-contratos-{{ card.id }}"
+              hx-swap="outerHTML">
+        ✕
+      </button>
+    </span>
+  {% empty %}
+    <span class="text-xs text-gray-500">Nenhum contrato associado.</span>
+  {% endfor %}
+</div>
