@@ -1,6 +1,6 @@
-<ul class="max-h-56 overflow-y-auto divide-y divide-gray-100">
+<ul class="max-h-56 overflow-y-auto space-y-1">
   {% for r in resultados %}
-    <li class="flex items-center justify-between px-2 py-2 hover:bg-gray-50 text-sm">
+    <li class="flex items-center justify-between rounded-md px-2 py-2 hover:bg-gray-50 text-sm">
       <div class="min-w-0">
         <div class="font-medium text-gray-800 truncate">{{ r.nome }}</div>
         <div class="text-xs text-gray-500 truncate">{{ r.email }} • {{ r.cpf_cnpj }}</div>
@@ -8,7 +8,7 @@
       <button type="button"
         class="ml-3 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs hover:bg-gray-50"
         hx-post="{% url 'kanban:card_add_cliente' card_id r.id %}"
-        hx-headers='{"X-CSRFToken':'{{ csrf_token }}'}"
+        hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
         hx-target="#chips-clientes-{{ card_id }}"
         hx-swap="outerHTML">
         Adicionar

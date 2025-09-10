@@ -1,0 +1,11 @@
+<option value="">Todas</option>
+{% for e in etapas %}
+  <option value="{{ e.id }}" {% if etapa_selecionada == e.id|stringformat:"s" %}selected{% endif %}>
+    {{ e.nome }}
+    (
+      {% for p in e.pipelines.all %}
+        {{ p.nome }}{% if not forloop.last %}, {% endif %}
+      {% empty %}sem pipeline{% endfor %}
+    )
+  </option>
+{% endfor %}

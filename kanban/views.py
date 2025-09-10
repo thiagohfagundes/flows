@@ -556,6 +556,148 @@ def card_move(request, card_id):
     # devolve o card renderizado (p/ reconciliação ou ignorar com swap=none)
     return render(request, "kanban/partials/card.html", {"card": card})
 
+# kanban/views.py
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.views.generic import ListView
+from django.db.models import Q, Count
+from django.shortcuts import get_object_or_404
+
+from .models import Card, Pipeline, Etapa, Cliente, ContratoLocacao
+
+@method_decorator(login_required, name="dispatch")
+class TicketListView(ListView):
+    model = Card
+    template_name = "kanban/tickets_list.html"
+    context_object_name = "cards"
+    paginate_by = 20
+
+    def get_queryset(self):
+        qs = (
+            Card.objects.select_related("pipeline", "etapa", "criado_por", "atribuido_a")
+            .prefetch_related("clientes_associados", "contratos_locacao")
+            .annotate(
+                tarefas_total=Count("tarefas", distinct=True),
+                tarefas_done=Count("tarefas", filter=Q(tarefas__concluido=True), distinct=True),
+            )
+        )
+
+        g = self.request.GET
+
+        # Busca livre (titulo, descrição, id, etapa/pipeline por nome)
+        q = (g.get("q") or "").strip()
+        if q:
+            qs = qs.filter(
+                Q(titulo__icontains=q)
+                | Q(descricao__icontains=q)
+                | Q(id__icontains=q)
+                | Q(etapa__nome__icontains=q)
+                | Q(pipeline__nome__icontains=q)
+            )
+
+        # Pipeline / Etapa
+        pipeline_id = g.get("pipeline")
+        if pipeline_id:
+            qs = qs.filter(pipeline_id=pipeline_id)
+
+        etapa_id = g.get("etapa")
+        if etapa_id:
+            qs = qs.filter(etapa_id=etapa_id)
+
+        # Responsável / Autor
+        atribuido = g.get("atribuido_a")
+        if atribuido:
+            qs = qs.filter(atribuido_a_id=atribuido)
+
+        criado_por = g.get("criado_por")
+        if criado_por:
+            qs = qs.filter(criado_por_id=criado_por)
+
+        # Clientes / Contratos relacionados (texto livre)
+        cliente_q = (g.get("cliente") or "").strip()
+        if cliente_q:
+            qs = qs.filter(
+                Q(clientes_associados__nome__icontains=cliente_q)
+                | Q(clientes_associados__email__icontains=cliente_q)
+                | Q(clientes_associados__cpf_cnpj__icontains=cliente_q)
+            )
+
+        contrato_q = (g.get("contrato") or "").strip()
+        if contrato_q:
+            qs = qs.filter(
+                Q(contratos_locacao__nome_do_imovel__icontains=contrato_q)
+                | Q(contratos_locacao__identificador_contrato__icontains=contrato_q)
+            )
+
+        # Período (data de criação)
+        ini = g.get("ini")
+        fim = g.get("fim")
+        if ini:
+            qs = qs.filter(data_criacao__date__gte=ini)
+        if fim:
+            qs = qs.filter(data_criacao__date__lte=fim)
+
+        # Filtro por progresso (tem tarefas abertas/fechadas)
+        progresso = g.get("progresso")  # open | done | sem_tarefas
+        if progresso == "open":
+            qs = qs.filter(tarefas_total__gt=0).exclude(tarefas_done=Count("tarefas"))
+        elif progresso == "done":
+            qs = qs.filter(tarefas_total__gt=0, tarefas_done=Count("tarefas"))
+        elif progresso == "sem_tarefas":
+            qs = qs.filter(tarefas_total=0)
+
+        # Ordenação
+        ordenar = g.get("ordenar", "-data_criacao")
+        allow = {
+            "data_criacao", "-data_criacao",
+            "data_ult_modificacao", "-data_ult_modificacao",
+            "titulo", "-titulo",
+            "tarefas_total", "-tarefas_total",
+            "tarefas_done", "-tarefas_done",
+        }
+        if ordenar in allow:
+            qs = qs.order_by(ordenar)
+        else:
+            qs = qs.order_by("-data_criacao")
+
+        return qs.distinct()
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        qs = self.request.GET.copy()
+        qs.pop("page", None)
+        ctx["querystring"] = qs.urlencode()
+
+        # dados para selects
+        ctx["pipelines"] = Pipeline.objects.all().order_by("nome")
+        ctx["etapas"] = Etapa.objects.all().order_by("nome")
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        ctx["usuarios"] = User.objects.all().order_by("username")
+        return ctx
+
+def filtro_etapas(request):
+    """
+    Retorna apenas as <option> do select de etapas, filtrando por ?pipeline=<id>.
+    Como Etapa tem M2M 'pipelines', o filtro é pipelines__id=pipeline_id.
+    """
+    pipeline_id = request.GET.get("pipeline")
+    qs = Etapa.objects.all()
+
+    if pipeline_id:
+        qs = qs.filter(pipelines__id=pipeline_id)
+
+    qs = qs.prefetch_related("pipelines").order_by("nome")
+
+    html = render_to_string(
+        "kanban/partials/opcoes_etapas.html",
+        {
+            "etapas": qs,
+            "etapa_selecionada": request.GET.get("etapa"),
+        },
+    )
+    return HttpResponse(html)
+
 # -------------------------
 # TAREFAS (opcionais)
 # -------------------------

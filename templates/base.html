@@ -83,12 +83,36 @@
       <div class="h-full px-3 pb-4 overflow-y-auto bg-white">
         <ul class="space-y-2 font-medium">
           <!-- Processos -->
+
           <li>
-            <a href="{% url 'kanban:pipelines' %}"
-               class="flex items-center p-2 rounded-lg hover:bg-gray-100 {% if request.resolver_match and request.resolver_match.url_name == 'pipelines' %}bg-gray-100 text-gray-900{% else %}text-gray-900{% endif %}">
+            <button type="button"
+                    class="flex w-full items-center p-2 rounded-lg hover:bg-gray-100 text-gray-900"
+                    data-collapse-toggle="submenu-superlogica"
+                    aria-controls="submenu-superlogica">
               <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-              <span class="ml-3">Processos</span>
-            </a>
+              <span class="ml-3 flex-1 text-left">Processos</span>
+              <svg class="ml-auto h-5 w-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+
+            {% with name=request.resolver_match.url_name %}
+            <ul id="submenu-superlogica"
+                class="mt-1 space-y-1 pl-9 {% if name == 'meus_clientes' or name == 'meus_contratos' %}{% else %}hidden{% endif %}">
+              <li>
+                <a href="{% url 'kanban:pipelines' %}"
+                   class="flex items-center p-2 rounded-lg hover:bg-gray-100
+                          {% if name == 'meus_clientes' %}bg-gray-100 text-gray-900{% else %}text-gray-700{% endif %}">
+                  <span class="truncate">Meus processos</span>
+                </a>
+              </li>
+              <li>
+                <a href="{% url 'kanban:tickets_list' %}"
+                   class="flex items-center p-2 rounded-lg hover:bg-gray-100
+                          {% if name == 'meus_contratos' %}bg-gray-100 text-gray-900{% else %}text-gray-700{% endif %}">
+                  <span class="truncate">Meus tickets</span>
+                </a>
+              </li>
+            </ul>
+            {% endwith %}
           </li>
 
           <!-- Templates -->
@@ -149,6 +173,13 @@
       document.addEventListener("htmx:configRequest", (event) => {
         const token = "{{ csrf_token }}";
         if (token) event.detail.headers["X-CSRFToken"] = token;
+      });
+      // Re-inicializa componentes do Flowbite quando o HTMX injeta/atualiza HTML
+      document.addEventListener('htmx:afterSwap', function () {
+        if (window.initFlowbite) window.initFlowbite();
+      });
+      document.addEventListener('htmx:afterSettle', function () {
+        if (window.initFlowbite) window.initFlowbite();
       });
     </script>
 

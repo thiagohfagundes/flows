@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block title %}Tickets{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-7xl px-4 py-8">
+  <!-- Header -->
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-900">Tickets</h1>
+      <p class="text-sm text-gray-500">Busque e filtre seus cards por pipeline, etapa, responsável, cliente, contrato e período.</p>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <form method="get" class="mb-5 grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-6">
+    <div class="md:col-span-2">
+      <label class="mb-1 block text-xs font-medium text-gray-700">Buscar</label>
+      <input name="q" value="{{ request.GET.q }}" placeholder="Título, descrição, ID, pipeline..."
+             class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+    </div>
+
+    <!-- Pipeline -->
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Pipeline</label>
+      <select name="pipeline" id="select-pipeline"
+              class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"
+              hx-get="{% url 'kanban:filtro_etapas' %}"
+              hx-trigger="change"
+              hx-target="#select-etapa"
+              hx-swap="innerHTML"
+              hx-include="#select-pipeline, #select-etapa">
+        <option value="">Todos</option>
+        {% for p in pipelines %}
+          <option value="{{ p.id }}" {% if request.GET.pipeline == p.id|stringformat:"s" %}selected{% endif %}>
+            {{ p.nome }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Etapa -->
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Etapa</label>
+      <select id="select-etapa" name="etapa"
+              class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900">
+        <!-- estado inicial (sem filtro) -->
+        <option value="">Todas</option>
+        {% for e in etapas %}
+          <option value="{{ e.id }}" {% if request.GET.etapa == e.id|stringformat:"s" %}selected{% endif %}>
+            {{ e.nome }} (
+              {% for p in e.pipelines.all %}
+                {{ p.nome }}{% if not forloop.last %}, {% endif %}
+              {% empty %}sem pipeline{% endfor %}
+            )
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Atribuído a</label>
+      <select name="atribuido_a" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900">
+        <option value="">Todos</option>
+        {% for u in usuarios %}
+          <option value="{{ u.id }}" {% if request.GET.atribuido_a == u.id|stringformat:"s" %}selected{% endif %}>{{ u.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-xs font-medium text-gray-700">Criado por</label>
+      <select name="criado_por" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900">
+        <option value="">Todos</option>
+        {% for u in usuarios %}
+          <option value="{{ u.id }}" {% if request.GET.criado_por == u.id|stringformat:"s" %}selected{% endif %}>{{ u.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="md:col-span-3 grid grid-cols-3 gap-3">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Cliente</label>
+        <input name="cliente" value="{{ request.GET.cliente }}" placeholder="Nome/email/CPF…"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Contrato</label>
+        <input name="contrato" value="{{ request.GET.contrato }}" placeholder="Imóvel ou ID…"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Progresso</label>
+        <select name="progresso" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900">
+          <option value="">Todos</option>
+          <option value="open" {% if request.GET.progresso == "open" %}selected{% endif %}>Com tarefas em aberto</option>
+          <option value="done" {% if request.GET.progresso == "done" %}selected{% endif %}>Todas concluídas</option>
+          <option value="sem_tarefas" {% if request.GET.progresso == "sem_tarefas" %}selected{% endif %}>Sem tarefas</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="md:col-span-3 grid grid-cols-3 gap-3">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Criado ≥</label>
+        <input type="date" name="ini" value="{{ request.GET.ini }}"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Criado ≤</label>
+        <input type="date" name="fim" value="{{ request.GET.fim }}"
+               class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900"/>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-700">Ordenar</label>
+        <select name="ordenar" class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900">
+          <option value="-data_criacao" {% if request.GET.ordenar == "-data_criacao" or not request.GET.ordenar %}selected{% endif %}>Mais recentes</option>
+          <option value="data_criacao"  {% if request.GET.ordenar == "data_criacao" %}selected{% endif %}>Mais antigos</option>
+          <option value="-data_ult_modificacao" {% if request.GET.ordenar == "-data_ult_modificacao" %}selected{% endif %}>Modificados recentemente</option>
+          <option value="titulo" {% if request.GET.ordenar == "titulo" %}selected{% endif %}>Título (A→Z)</option>
+          <option value="-titulo" {% if request.GET.ordenar == "-titulo" %}selected{% endif %}>Título (Z→A)</option>
+          <option value="-tarefas_total" {% if request.GET.ordenar == "-tarefas_total" %}selected{% endif %}>Mais tarefas</option>
+          <option value="-tarefas_done" {% if request.GET.ordenar == "-tarefas_done" %}selected{% endif %}>Mais concluídas</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="md:col-span-6 flex items-center justify-end gap-2">
+      <a href="{% url 'kanban:tickets_list' %}" class="rounded-lg border px-4 py-2 text-sm">Limpar</a>
+      <button class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Filtrar</button>
+    </div>
+  </form>
+
+  {% if cards %}
+    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-gray-700">
+          <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+            <tr>
+              <th class="px-4 py-3">Título</th>
+              <th class="px-4 py-3">Pipeline/Etapa</th>
+              <th class="px-4 py-3">Atribuído</th>
+              <th class="px-4 py-3">Clientes</th>
+              <th class="px-4 py-3">Contratos</th>
+              <th class="px-4 py-3 text-right">Tarefas</th>
+              <th class="px-4 py-3">Criado</th>
+              <th class="px-4 py-3 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for c in cards %}
+              <tr class="bg-white">
+                <td class="px-4 py-3">
+                  <div class="font-medium text-gray-900">{{ c.titulo }}</div>
+                  {% if c.descricao %}
+                    <div class="text-xs text-gray-500">{{ c.descricao|truncatechars:80 }}</div>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3">
+                  <div class="text-sm text-gray-800">{{ c.pipeline.nome|default:"—" }}</div>
+                  <div class="text-xs text-gray-500">{{ c.etapa.nome }}</div>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="text-sm text-gray-700">{{ c.atribuido_a.username|default:"—" }}</span>
+                </td>
+                <td class="px-4 py-3">
+                  {% if c.clientes_associados.all %}
+                    <div class="flex flex-wrap gap-1">
+                      {% for cl in c.clientes_associados.all|slice:":3" %}
+                        <span class="rounded-md bg-amber-50 px-2 py-0.5 text-xs text-amber-800 border border-amber-200">{{ cl.nome }}</span>
+                      {% endfor %}
+                      {% with total=c.clientes_associados.all|length %}
+                        {% if total > 3 %}
+                          <span class="text-xs text-gray-500">+{{ total|add:-3 }}</span>
+                        {% endif %}
+                      {% endwith %}
+                    </div>
+                  {% else %} — {% endif %}
+                </td>
+                <td class="px-4 py-3">
+                  {% if c.contratos_locacao.all %}
+                    <div class="flex flex-wrap gap-1">
+                      {% for ct in c.contratos_locacao.all|slice:":2" %}
+                        <span class="rounded-md bg-indigo-50 px-2 py-0.5 text-xs text-indigo-800 border border-indigo-200">{{ ct.identificador_contrato }}</span>
+                      {% endfor %}
+                      {% with total=c.contratos_locacao.all|length %}
+                        {% if total > 2 %}
+                          <span class="text-xs text-gray-500">+{{ total|add:-2 }}</span>
+                        {% endif %}
+                      {% endwith %}
+                    </div>
+                  {% else %} — {% endif %}
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <span class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700">
+                    {{ c.tarefas_done }}/{{ c.tarefas_total }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="text-sm text-gray-600">{{ c.data_criacao|date:"d/m/Y H:i" }}</span>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <a href="{% url 'kanban:card_detail' c.id %}"
+                     class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                    Abrir
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if is_paginated %}
+      <div class="mt-4 flex items-center justify-between">
+        <p class="text-sm text-gray-500">
+          Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        </p>
+        <div class="inline-flex items-center gap-1">
+          {% if page_obj.has_previous %}
+            <a href="?page=1&{{ querystring }}" class="rounded-lg border px-3 py-1.5 text-sm">« Primeira</a>
+            <a href="?page={{ page_obj.previous_page_number }}&{{ querystring }}" class="rounded-lg border px-3 py-1.5 text-sm">Anterior</a>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&{{ querystring }}" class="rounded-lg border px-3 py-1.5 text-sm">Próxima</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&{{ querystring }}" class="rounded-lg border px-3 py-1.5 text-sm">Última »</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center">
+      <h3 class="mb-2 text-base font-semibold text-gray-900">Nenhum ticket encontrado</h3>
+      <p class="text-sm text-gray-500">Ajuste os filtros acima.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
