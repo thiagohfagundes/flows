@@ -76,93 +76,89 @@
       </div>
     </nav>
 
-    <!-- Sidebar -->
-    <aside id="sidebar"
-           class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 lg:translate-x-0"
-           aria-label="Sidebar">
-      <div class="h-full px-3 pb-4 overflow-y-auto bg-white">
-        <ul class="space-y-2 font-medium">
-          <!-- Processos -->
+<!-- Sidebar -->
+<aside id="sidebar"
+       class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 lg:translate-x-0"
+       aria-label="Sidebar">
+  <div class="h-full px-3 pb-4 overflow-y-auto bg-white">
+    <ul class="space-y-2 font-medium">
 
+      {% with name=request.resolver_match.url_name %}
+      <!-- Processos -->
+      <li>
+        <button type="button"
+                class="flex w-full items-center p-2 rounded-lg hover:bg-gray-100 text-gray-900"
+                data-collapse-toggle="submenu-processos"
+                aria-controls="submenu-processos">
+          <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+          <span class="ml-3 flex-1 text-left">Processos</span>
+          <svg class="ml-auto h-5 w-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+
+        <ul id="submenu-processos"
+            class="mt-1 space-y-1 pl-9 {% if name == 'pipelines' or name == 'tickets_list' %}{% else %}hidden{% endif %}">
           <li>
-            <button type="button"
-                    class="flex w-full items-center p-2 rounded-lg hover:bg-gray-100 text-gray-900"
-                    data-collapse-toggle="submenu-superlogica"
-                    aria-controls="submenu-superlogica">
-              <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-              <span class="ml-3 flex-1 text-left">Processos</span>
-              <svg class="ml-auto h-5 w-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-            </button>
-
-            {% with name=request.resolver_match.url_name %}
-            <ul id="submenu-superlogica"
-                class="mt-1 space-y-1 pl-9 {% if name == 'meus_clientes' or name == 'meus_contratos' %}{% else %}hidden{% endif %}">
-              <li>
-                <a href="{% url 'kanban:pipelines' %}"
-                   class="flex items-center p-2 rounded-lg hover:bg-gray-100
-                          {% if name == 'meus_clientes' %}bg-gray-100 text-gray-900{% else %}text-gray-700{% endif %}">
-                  <span class="truncate">Meus processos</span>
-                </a>
-              </li>
-              <li>
-                <a href="{% url 'kanban:tickets_list' %}"
-                   class="flex items-center p-2 rounded-lg hover:bg-gray-100
-                          {% if name == 'meus_contratos' %}bg-gray-100 text-gray-900{% else %}text-gray-700{% endif %}">
-                  <span class="truncate">Meus tickets</span>
-                </a>
-              </li>
-            </ul>
-            {% endwith %}
-          </li>
-
-          <!-- Templates -->
-          <li>
-            <a href="{% url 'kanban_templates:template_list' %}"
-               class="flex items-center p-2 rounded-lg hover:bg-gray-100 {% if request.resolver_match and request.resolver_match.url_name == 'template_list' %}bg-gray-100 text-gray-900{% else %}text-gray-900{% endif %}">
-              <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87"/></svg>
-              <span class="ml-3">Templates</span>
+            <a href="{% url 'kanban:pipelines' %}"
+               class="flex items-center p-2 rounded-lg hover:bg-gray-100 {% if name == 'pipelines' %}bg-gray-100 text-gray-900{% else %}text-gray-700{% endif %}">
+              <span class="truncate">Meus processos</span>
             </a>
           </li>
-
-          <!-- Divider -->
           <li>
-            <div class="px-2 pt-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Dados Superlógica</div>
-          </li>
-
-          <!-- Macroopção Dados Superlógica -->
-          <li>
-            <button type="button"
-                    class="flex w-full items-center p-2 rounded-lg hover:bg-gray-100 text-gray-900"
-                    data-collapse-toggle="submenu-superlogica"
-                    aria-controls="submenu-superlogica">
-              <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
-              <span class="ml-3 flex-1 text-left">Dados Superlógica</span>
-              <svg class="ml-auto h-5 w-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-            </button>
-
-            {% with name=request.resolver_match.url_name %}
-            <ul id="submenu-superlogica"
-                class="mt-1 space-y-1 pl-9 {% if name == 'meus_clientes' or name == 'meus_contratos' %}{% else %}hidden{% endif %}">
-              <li>
-                <a href="{% url 'meus_clientes' %}"
-                   class="flex items-center p-2 rounded-lg hover:bg-gray-100
-                          {% if name == 'meus_clientes' %}bg-gray-100 text-gray-900{% else %}text-gray-700{% endif %}">
-                  <span class="truncate">Meus clientes</span>
-                </a>
-              </li>
-              <li>
-                <a href="{% url 'meus_contratos' %}"
-                   class="flex items-center p-2 rounded-lg hover:bg-gray-100
-                          {% if name == 'meus_contratos' %}bg-gray-100 text-gray-900{% else %}text-gray-700{% endif %}">
-                  <span class="truncate">Meus contratos</span>
-                </a>
-              </li>
-            </ul>
-            {% endwith %}
+            <a href="{% url 'kanban:tickets_list' %}"
+               class="flex items-center p-2 rounded-lg hover:bg-gray-100 {% if name == 'tickets_list' %}bg-gray-100 text-gray-900{% else %}text-gray-700{% endif %}">
+              <span class="truncate">Meus tickets</span>
+            </a>
           </li>
         </ul>
-      </div>
-    </aside>
+      </li>
+
+      <!-- Templates -->
+      <li>
+        <a href="{% url 'kanban_templates:template_list' %}"
+           class="flex items-center p-2 rounded-lg hover:bg-gray-100 {% if name == 'template_list' %}bg-gray-100 text-gray-900{% else %}text-gray-900{% endif %}">
+          <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87"/></svg>
+          <span class="ml-3">Templates</span>
+        </a>
+      </li>
+
+      <!-- Divider -->
+      <li>
+        <div class="px-2 pt-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Dados Superlógica</div>
+      </li>
+
+      <!-- Dados Superlógica -->
+      <li>
+        <button type="button"
+                class="flex w-full items-center p-2 rounded-lg hover:bg-gray-100 text-gray-900"
+                data-collapse-toggle="submenu-dados-sl"
+                aria-controls="submenu-dados-sl">
+          <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+          <span class="ml-3 flex-1 text-left">Dados Superlógica</span>
+          <svg class="ml-auto h-5 w-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+
+        <ul id="submenu-dados-sl"
+            class="mt-1 space-y-1 pl-9 {% if name == 'meus_clientes' or name == 'meus_contratos' %}{% else %}hidden{% endif %}">
+          <li>
+            <a href="{% url 'meus_clientes' %}"
+               class="flex items-center p-2 rounded-lg hover:bg-gray-100 {% if name == 'meus_clientes' %}bg-gray-100 text-gray-900{% else %}text-gray-700{% endif %}">
+              <span class="truncate">Meus clientes</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'meus_contratos' %}"
+               class="flex items-center p-2 rounded-lg hover:bg-gray-100 {% if name == 'meus_contratos' %}bg-gray-100 text-gray-900{% else %}text-gray-700{% endif %}">
+              <span class="truncate">Meus contratos</span>
+            </a>
+          </li>
+        </ul>
+      </li>
+      {% endwith %}
+
+    </ul>
+  </div>
+</aside>
+
 
     <!-- Conteúdo principal -->
     <main class="p-4 lg:ml-64 pt-20">

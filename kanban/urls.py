@@ -27,7 +27,10 @@ urlpatterns = [
     path("cards/<int:card_id>/delete/", views.card_delete, name="card_delete"),
     path("cards/<int:card_id>/move/", views.card_move, name="card_move"),
     path("cards/<int:card_id>/", views.card_detail, name="card_detail"),
+    path("cards/<int:card_id>/page/", views.card_full, name="card_full"),
     path("cards/", views.TicketListView.as_view(), name="tickets_list"),
+    path("cards/<int:card_id>/update-etapa/", views.card_update_etapa, name="card_update_etapa"),
+    path("cards/<int:card_id>/update-assign/", views.card_update_assign, name="card_update_assign"),
 
     # apenas htmx (filtros dinâmicos)
     path("filtros/etapas/", views.filtro_etapas, name="filtro_etapas"),

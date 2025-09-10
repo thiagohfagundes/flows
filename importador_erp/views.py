@@ -353,3 +353,29 @@ class ContratosLocacaoListView(ListView):
         qs.pop("page", None)
         ctx["querystring"] = qs.urlencode()
         return ctx
+    
+@login_required
+def contrato_detail(request, pk):
+    contrato = (
+        ContratoLocacao.objects
+        .select_related("licenca")
+        .prefetch_related(
+            "proprietarios", "inquilinos",
+            # cards vinculados e dependências comuns para listar bonitinho
+            "cards__etapa", "cards__pipeline", "cards__atribuido_a",
+        )
+        .get(pk=pk)
+    )
+
+    # KPIs rápidos
+    cards = contrato.cards.all()  # graças ao related_name='cards' no M2M de Card
+    tarefas_total = 0
+    tarefas_done = 0
+    # se quiser contar tarefas, dá para anotar; para simplicidade, deixo sem anotar aqui
+
+    ctx = {
+        "contrato": contrato,
+        "cards": cards,
+        "erp_url": f"https://apps.superlogica.net/imobiliaria/contratos/id/{contrato.identificador_contrato}",
+    }
+    return render(request, "importador_erp/contrato_detail.html", ctx)

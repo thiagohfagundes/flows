@@ -166,7 +166,7 @@
           <tbody class="divide-y divide-gray-100">
             {% for c in contratos %}
               <tr class="bg-white">
-                <td class="px-4 py-3 font-medium text-gray-900">{{ c.nome_do_imovel }}</td>
+                <td class="px-4 py-3 font-medium text-gray-900"><a href="{% url 'contrato_detail' c.id %}">{{ c.nome_do_imovel }}</a></td>
                 <td class="px-4 py-3">{{ c.data_inicio|date:"d/m/Y" }}</td>
                 <td class="px-4 py-3">{{ c.data_fim|date:"d/m/Y" }}</td>
                 <td class="px-4 py-3 text-right">R$ {{ c.valor_aluguel|floatformat:2 }}</td>

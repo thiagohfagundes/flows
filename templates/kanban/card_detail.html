@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% block title %}Ticket #{{ card.id }} – {{ card.titulo }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-7xl px-4 py-8 space-y-6">
+
+  <!-- Breadcrumbs / Header -->
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <nav class="text-xs text-gray-500 mb-1">
+        <a href="{% url 'kanban:tickets_list' %}" class="hover:underline">Tickets</a>
+        <span class="mx-1">/</span>
+        {% if card.pipeline %}
+          <span class="text-gray-700">{{ card.pipeline.nome }}</span>
+          <span class="mx-1">/</span>
+        {% endif %}
+        <span class="text-gray-700">Ticket #{{ card.id }}</span>
+      </nav>
+      <h1 class="text-2xl font-semibold text-gray-900 leading-tight">{{ card.titulo }}</h1>
+      <div class="mt-2 flex flex-wrap items-center gap-2">
+        <!-- badges substituíveis por HTMX -->
+        <div id="badge-etapa">
+          {% include "kanban/partials/badge_etapa.html" with card=card %}
+        </div>
+        <div id="badge-assign">
+          {% include "kanban/partials/badge_assign.html" with card=card %}
+        </div>
+        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-600">
+          Criado em {{ card.data_criacao|date:"d/m/Y H:i" }}
+        </span>
+        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-600">
+          Atualizado {{ card.data_ult_modificacao|date:"d/m/Y H:i" }}
+        </span>
+        <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs text-blue-700">
+          ID: #{{ card.id }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Linha de ações rápidas -->
+  <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+    <!-- Mudar etapa -->
+    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+    <label class="mb-1 block text-xs font-medium text-gray-700">Mover para etapa</label>
+    <form
+        hx-post="{% url 'kanban:card_update_etapa' card.id %}"
+        hx-target="#badge-etapa"
+        hx-swap="outerHTML">
+        {% csrf_token %}
+        <div class="flex items-center gap-2">
+        <select name="etapa" class="w-full rounded-md border border-gray-300 bg-gray-50 p-2 text-sm"
+                {% if not card.pipeline_id %}disabled{% endif %}>
+            {% if not card.pipeline_id %}
+            <option>Defina um pipeline para habilitar as etapas</option>
+            {% endif %}
+            {% for e in etapas_card %}
+            <option value="{{ e.id }}" {% if e.id == card.etapa_id %}selected{% endif %}>{{ e.nome }}</option>
+            {% endfor %}
+        </select>
+        <button class="rounded-md bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700"
+                {% if not card.pipeline_id %}disabled{% endif %}>
+            Mover
+        </button>
+        </div>
+    </form>
+    </div>
+
+    <!-- Atribuir responsável -->
+    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <label class="mb-1 block text-xs font-medium text-gray-700">Atribuir a</label>
+      <form
+          hx-post="{% url 'kanban:card_update_assign' card.id %}"
+          hx-target="#badge-assign"
+          hx-swap="outerHTML">
+        {% csrf_token %}
+        <div class="flex items-center gap-2">
+          <select name="atribuido_a" class="w-full rounded-md border border-gray-300 bg-gray-50 p-2 text-sm">
+            <option value="">— Sem responsável —</option>
+            {% for u in usuarios %}
+              <option value="{{ u.id }}" {% if card.atribuido_a_id == u.id %}selected{% endif %}>{{ u.username }}</option>
+            {% endfor %}
+          </select>
+          <button class="rounded-md bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700">Salvar</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Progresso -->
+    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <div class="mb-1 flex items-center justify-between text-sm text-gray-600">
+        <span>Tarefas concluídas</span>
+        <span class="font-medium">{{ done }}/{{ total }}</span>
+      </div>
+      <progress value="{{ done }}" max="{{ total|default:1 }}" class="w-full h-2 align-middle"></progress>
+    </div>
+  </div>
+
+  <!-- Conteúdo em 2 colunas -->
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <!-- Coluna principal -->
+    <div class="space-y-6 lg:col-span-2">
+      <!-- Descrição -->
+      {% if card.descricao %}
+      <section class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <h2 class="mb-2 text-sm font-semibold text-gray-900">Descrição</h2>
+        <p class="text-sm text-gray-800 whitespace-pre-line">{{ card.descricao }}</p>
+      </section>
+      {% endif %}
+
+      <!-- Tarefas -->
+      <section class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div class="mb-2 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-gray-900">Tarefas</h2>
+          <span class="text-xs text-gray-500">marque para concluir</span>
+        </div>
+
+        <div id="tarefas-{{ card.id }}" class="space-y-2">
+          {% for t in card.tarefas.all %}
+            <div id="tarefa-{{ t.id }}" class="flex items-start justify-between rounded-lg border border-gray-200 bg-white p-2">
+              <label class="flex items-center gap-2 text-sm text-gray-800">
+                <input type="checkbox" {% if t.concluido %}checked{% endif %}
+                       hx-post="{% url 'kanban:tarefa_toggle' t.id %}"
+                       hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+                       hx-target="#tarefa-{{ t.id }}" hx-swap="outerHTML">
+                <span class="{% if t.concluido %}line-through text-gray-400{% endif %}">{{ t.titulo }}</span>
+              </label>
+            </div>
+          {% empty %}
+            <p class="text-xs text-gray-500">Sem tarefas ainda.</p>
+          {% endfor %}
+        </div>
+
+        <form class="mt-3"
+              hx-post="{% url 'kanban:tarefa_create' card.id %}"
+              hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+              hx-target="#tarefas-{{ card.id }}" hx-swap="beforeend"
+              hx-on::after-request="this.reset()">
+          <div class="flex items-center gap-2">
+            <input type="text" name="titulo" placeholder="Nova tarefa…"
+                   class="block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500" required>
+            <button type="submit"
+                    class="rounded-md border border-gray-200 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50">Adicionar</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Comentários -->
+      <section class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <h2 class="mb-2 text-sm font-semibold text-gray-900">Comentários</h2>
+        <form
+            hx-post="{% url 'kanban:comentario_create' card.id %}"
+            hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+            hx-target="#comentarios-list-{{ card.id }}"
+            hx-swap="afterbegin"
+            hx-on::after-request="this.reset()">
+          <textarea name="conteudo" rows="3" placeholder="Escreva um comentário…"
+                    class="w-full resize-y rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500"
+                    required></textarea>
+          <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
+            <span>Postando como <span class="font-medium text-gray-700">{{ request.user.username }}</span></span>
+            <button class="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700">
+              Comentar
+            </button>
+          </div>
+        </form>
+
+        <div id="comentarios-list-{{ card.id }}" class="mt-3 space-y-3">
+          {% for c in card.comentarios.all|dictsortreversed:"criado_em" %}
+            {% include "kanban/partials/comentario_item.html" with c=c only %}
+          {% empty %}
+            <p class="text-xs text-gray-500">Ainda não há comentários.</p>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="space-y-6">
+      <!-- Propriedades -->
+      <section class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div class="mb-2 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-gray-900">Propriedades</h2>
+          <span class="text-xs text-gray-500">salva automaticamente</span>
+        </div>
+
+        <form
+            hx-post="{% url 'kanban:card_props_update' card.id %}"
+            hx-trigger="change delay:400ms from:input, change from:select"
+            hx-target="this" hx-swap="none"
+            class="grid grid-cols-1 gap-3">
+          {% csrf_token %}
+          {% for p in card.propriedades.all %}
+            <div class="grid gap-1.5">
+              <label class="text-sm font-medium text-gray-900">
+                {{ p.definicao.nome }}
+                {% if p.definicao.obrigatorio %}<span class="text-red-500">*</span>{% endif %}
+              </label>
+
+              {% if p.definicao.tipo == "text" %}
+                <input type="text" name="prop_{{ p.definicao_id }}" value="{{ p.valor|default_if_none:'' }}"
+                       class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+
+              {% elif p.definicao.tipo == "number" %}
+                <input type="number" step="any" name="prop_{{ p.definicao_id }}" value="{{ p.valor|default_if_none:'' }}"
+                       class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+
+              {% elif p.definicao.tipo == "bool" %}
+                <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                  <input type="checkbox" name="prop_{{ p.definicao_id }}" {% if p.valor == "true" %}checked{% endif %}
+                         class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                  Ativo
+                </label>
+
+              {% elif p.definicao.tipo == "date" %}
+                <input type="date" name="prop_{{ p.definicao_id }}" value="{{ p.valor|default_if_none:'' }}"
+                       class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+
+              {% elif p.definicao.tipo == "select" %}
+                {% with opts=p.definicao.opcoes %}
+                  <select name="prop_{{ p.definicao_id }}"
+                          class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">—</option>
+                    {% if opts %}
+                      {% for opt in opts %}
+                        <option value="{{ opt }}" {% if p.valor == opt %}selected{% endif %}>{{ opt }}</option>
+                      {% endfor %}
+                    {% endif %}
+                  </select>
+                {% endwith %}
+              {% else %}
+                <input type="text" name="prop_{{ p.definicao_id }}" value="{{ p.valor|default_if_none:'' }}"
+                       class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+              {% endif %}
+            </div>
+          {% empty %}
+            <p class="text-xs text-gray-500">Este pipeline não definiu propriedades.</p>
+          {% endfor %}
+        </form>
+      </section>
+
+      <!-- Relacionamentos -->
+      <section class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <h2 class="mb-2 text-sm font-semibold text-gray-900">Relacionamentos</h2>
+
+        <!-- Clientes -->
+        <div class="mb-4">
+          <div class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Clientes</div>
+          {% include "kanban/partials/chips_clientes.html" with card=card %}
+          <div class="mt-2">
+            <input type="search" name="q" placeholder="Buscar cliente…"
+                   hx-get="{% url 'kanban:card_buscar_clientes' card.id %}"
+                   hx-trigger="keyup changed delay:400ms"
+                   hx-target="#resultados-clientes-{{ card.id }}"
+                   class="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500" />
+            <div id="resultados-clientes-{{ card.id }}" class="mt-2"></div>
+          </div>
+        </div>
+
+        <!-- Contratos -->
+        <div>
+          <div class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Contratos</div>
+          {% include "kanban/partials/chips_contratos.html" with card=card %}
+          <div class="mt-2">
+            <input type="search" name="q" placeholder="Buscar contrato…"
+                   hx-get="{% url 'kanban:card_buscar_contratos' card.id %}"
+                   hx-trigger="keyup changed delay:400ms"
+                   hx-target="#resultados-contratos-{{ card.id }}"
+                   class="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500" />
+            <div id="resultados-contratos-{{ card.id }}" class="mt-2"></div>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<!-- reinit flowbite após HTMX (coloque também no base.html se ainda não estiver) -->
+<script>
+  document.addEventListener('htmx:afterSwap', () => { if (window.initFlowbite) window.initFlowbite(); });
+  document.addEventListener('htmx:afterSettle', () => { if (window.initFlowbite) window.initFlowbite(); });
+</script>
+{% endblock %}

@@ -1,0 +1,4 @@
+<!-- templates/kanban/partials/badge_assign.html -->
+<span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs text-blue-700">
+  {% if card.atribuido_a %}Atribuído: {{ card.atribuido_a.username }}{% else %}Sem responsável{% endif %}
+</span>

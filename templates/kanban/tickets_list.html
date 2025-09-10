@@ -151,7 +151,7 @@
             {% for c in cards %}
               <tr class="bg-white">
                 <td class="px-4 py-3">
-                  <div class="font-medium text-gray-900">{{ c.titulo }}</div>
+                  <div class="font-medium text-gray-900"><a href="{% url 'kanban:card_full' c.id %}">{{ c.titulo }}</a></div>
                   {% if c.descricao %}
                     <div class="text-xs text-gray-500">{{ c.descricao|truncatechars:80 }}</div>
                   {% endif %}
@@ -200,7 +200,7 @@
                   <span class="text-sm text-gray-600">{{ c.data_criacao|date:"d/m/Y H:i" }}</span>
                 </td>
                 <td class="px-4 py-3 text-right">
-                  <a href="{% url 'kanban:card_detail' c.id %}"
+                  <a href="{% url 'kanban:card_full' c.id %}"
                      class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
                     Abrir
                   </a>

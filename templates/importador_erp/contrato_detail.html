@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Contrato {{ contrato.identificador_contrato }} – {{ contrato.nome_do_imovel }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-7xl px-4 py-8 space-y-6">
+
+  <!-- Header / Ações -->
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <nav class="text-xs text-gray-500 mb-1">
+        <a href="{% url 'meus_contratos' %}" class="hover:underline">Meus contratos</a>
+        <span class="mx-1">/</span>
+        <span class="text-gray-700">Contrato #{{ contrato.id }}</span>
+      </nav>
+      <h1 class="text-2xl font-semibold text-gray-900 leading-tight">
+        {{ contrato.nome_do_imovel }}
+      </h1>
+      <div class="mt-2 flex flex-wrap items-center gap-2">
+        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700">
+          ID ERP: {{ contrato.identificador_contrato }}
+        </span>
+        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700">
+          {{ contrato.tipo_imovel }} • {{ contrato.tipo_contrato }}
+        </span>
+        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs
+                     {% if contrato.contrato_ativo %}bg-green-50 text-green-700{% else %}bg-red-50 text-red-700{% endif %}">
+          {% if contrato.contrato_ativo %}Ativo{% else %}Inativo{% endif %}
+        </span>
+        <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs text-blue-700">
+          Status: {{ contrato.status_contrato }}
+        </span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a href="{{ erp_url }}" target="_blank" rel="noopener"
+         class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+        Ver no Superlógica ERP ↗
+      </a>
+    </div>
+  </div>
+
+  <!-- Resumo do contrato -->
+  <section class="grid grid-cols-1 gap-4 md:grid-cols-3">
+    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Período</div>
+      <div class="text-sm text-gray-800">
+        Início: <span class="font-medium">{{ contrato.data_inicio|date:"d/m/Y" }}</span><br>
+        Fim: <span class="font-medium">{{ contrato.data_fim|date:"d/m/Y" }}</span>
+      </div>
+      {% if contrato.renovacao_automatica %}
+        <div class="mt-2 inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs text-amber-800 border border-amber-200">
+          Renovação automática
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Valores</div>
+      <div class="text-sm text-gray-800">
+        Aluguel: <span class="font-medium">R$ {{ contrato.valor_aluguel|floatformat:2 }}</span><br>
+        Taxa adm.: <span class="font-medium">R$ {{ contrato.taxa_administracao|floatformat:2 }}</span><br>
+        Taxa locação: <span class="font-medium">R$ {{ contrato.taxa_locacao|floatformat:2 }}</span>
+      </div>
+      {% if contrato.valor_seguro_incendio %}
+        <div class="mt-2 text-xs text-gray-600">Seguro incêndio: R$ {{ contrato.valor_seguro_incendio|floatformat:2 }}</div>
+      {% endif %}
+      {% if contrato.valor_garantia_parcela %}
+        <div class="text-xs text-gray-600">Garantia (parcela): R$ {{ contrato.valor_garantia_parcela|floatformat:2 }}</div>
+      {% endif %}
+      {% if contrato.valor_venda_imovel %}
+        <div class="text-xs text-gray-600">Valor venda: R$ {{ contrato.valor_venda_imovel|floatformat:2 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Garantias/Seguros</div>
+      <div class="text-sm text-gray-800">
+        Tipo garantia: <span class="font-medium">{{ contrato.tipo_garantia }}</span><br>
+        Aluguel garantido: <span class="font-medium">{% if contrato.aluguel_garantido %}Sim{% else %}Não{% endif %}</span>
+      </div>
+      <div class="mt-2 text-xs text-gray-600">
+        {% if contrato.data_inicio_garantia %} Garantia: {{ contrato.data_inicio_garantia|date:"d/m/Y" }} → {{ contrato.data_fim_garantia|date:"d/m/Y" }}<br>{% endif %}
+        {% if contrato.data_inicio_seguro_incendio %} Seguro: {{ contrato.data_inicio_seguro_incendio|date:"d/m/Y" }} → {{ contrato.data_fim_seguro_incendio|date:"d/m/Y" }}<br>{% endif %}
+        {% if contrato.data_ultimo_reajuste %} Último reajuste: {{ contrato.data_ultimo_reajuste|date:"d/m/Y" }}{% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Pessoas -->
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <section class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <h2 class="mb-2 text-sm font-semibold text-gray-900">Proprietários</h2>
+      {% if contrato.proprietarios.all %}
+        <ul class="divide-y divide-gray-100">
+          {% for p in contrato.proprietarios.all %}
+            <li class="py-2 flex items-center justify-between">
+              <div>
+                <div class="text-sm font-medium text-gray-900">{{ p.nome }}</div>
+                <div class="text-xs text-gray-500">{{ p.email }} • {{ p.cpf_cnpj }}</div>
+              </div>
+              <span class="rounded-md bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700 border border-emerald-200">Proprietário</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-xs text-gray-500">Nenhum proprietário vinculado.</p>
+      {% endif %}
+    </section>
+
+    <section class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <h2 class="mb-2 text-sm font-semibold text-gray-900">Inquilinos</h2>
+      {% if contrato.inquilinos.all %}
+        <ul class="divide-y divide-gray-100">
+          {% for i in contrato.inquilinos.all %}
+            <li class="py-2 flex items-center justify-between">
+              <div>
+                <div class="text-sm font-medium text-gray-900">{{ i.nome }}</div>
+                <div class="text-xs text-gray-500">{{ i.email }} • {{ i.cpf_cnpj }}</div>
+              </div>
+              <span class="rounded-md bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700 border border-indigo-200">Inquilino</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-xs text-gray-500">Nenhum inquilino vinculado.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <!-- Cards vinculados -->
+  <section class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="mb-2 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-gray-900">Tickets relacionados</h2>
+      <span class="text-xs text-gray-500">{{ cards|length }} ticket(s)</span>
+    </div>
+
+    {% if cards %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-gray-700">
+          <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+            <tr>
+              <th class="px-4 py-3">Título</th>
+              <th class="px-4 py-3">Pipeline</th>
+              <th class="px-4 py-3">Etapa</th>
+              <th class="px-4 py-3">Atribuído</th>
+              <th class="px-4 py-3">Criado</th>
+              <th class="px-4 py-3 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for c in cards %}
+              <tr class="bg-white">
+                <td class="px-4 py-3">
+                  <div class="font-medium text-gray-900">{{ c.titulo }}</div>
+                  {% if c.descricao %}<div class="text-xs text-gray-500">{{ c.descricao|truncatechars:80 }}</div>{% endif %}
+                </td>
+                <td class="px-4 py-3">{{ c.pipeline.nome|default:"—" }}</td>
+                <td class="px-4 py-3">{{ c.etapa.nome|default:"—" }}</td>
+                <td class="px-4 py-3">{{ c.atribuido_a.username|default:"—" }}</td>
+                <td class="px-4 py-3">{{ c.data_criacao|date:"d/m/Y H:i" }}</td>
+                <td class="px-4 py-3 text-right">
+                  <a href="{% url 'kanban:card_full' c.id %}"
+                     class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                    Abrir
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-sm text-gray-500">Nenhum ticket relacionado ao contrato.</p>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}

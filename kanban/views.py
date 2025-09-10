@@ -9,10 +9,15 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.contrib import messages
 from django.db.models import Prefetch
-from django.db.models import Max, Q
+from django.db.models import Max, Q, Count
 from .models import Pipeline, Etapa, Card, Tarefa, PipelinePropriedade, Propriedade, Checklist, ChecklistItem, Comentario, STATUS_TAREFA, STATUS_ETAPA, TIPOS_PROPRIEDADE
 from .forms import ChecklistForm, ChecklistItemFormSet, ChecklistItemForm
 from importador_erp.models import Cliente, ContratoLocacao
+from django.utils.decorators import method_decorator
+from django.views.generic import ListView
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 def home(request):
     return render(request, "kanban/home.html")
@@ -556,14 +561,77 @@ def card_move(request, card_id):
     # devolve o card renderizado (p/ reconciliação ou ignorar com swap=none)
     return render(request, "kanban/partials/card.html", {"card": card})
 
-# kanban/views.py
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
-from django.views.generic import ListView
-from django.db.models import Q, Count
-from django.shortcuts import get_object_or_404
+@login_required
+def card_full(request, card_id):
+    card = (
+        Card.objects
+        .select_related("pipeline", "etapa", "criado_por", "atribuido_a")
+        .prefetch_related(
+            "clientes_associados",
+            "contratos_locacao",
+            "tarefas",
+            "propriedades__definicao",
+            "comentarios__criado_por",
+        )
+        .get(pk=card_id)
+    )
 
-from .models import Card, Pipeline, Etapa, Cliente, ContratoLocacao
+    # ✅ Etapas apenas do pipeline do card (M2M)
+    if card.pipeline_id:
+        etapas_card = Etapa.objects.filter(pipelines__id=card.pipeline_id)
+        # Garante que a etapa atual apareça mesmo se não estiver no M2M (dados antigos/inconsistência)
+        if card.etapa_id and not etapas_card.filter(pk=card.etapa_id).exists():
+            etapas_card = Etapa.objects.filter(pk=card.etapa_id) | etapas_card
+        etapas_card = etapas_card.order_by("nome").distinct()
+    else:
+        etapas_card = Etapa.objects.none()
+
+    total = card.tarefas.count()
+    done = card.tarefas.filter(concluido=True).count()
+
+    ctx = {
+        "card": card,
+        "total": total,
+        "done": done,
+        "etapas_card": etapas_card,            # <-- use isto no template
+        # se ainda quiser para outras coisas:
+        # "pipelines": Pipeline.objects.all().order_by("nome"),
+        "usuarios": User.objects.all().order_by("username"),
+    }
+    return render(request, "kanban/card_detail.html", ctx)
+
+@login_required
+@require_http_methods(["POST"])
+def card_update_etapa(request, card_id):
+    card = get_object_or_404(Card, pk=card_id)
+    etapa_id = request.POST.get("etapa")
+    if not etapa_id:
+        return HttpResponseBadRequest("Etapa inválida")
+    etapa = get_object_or_404(Etapa, pk=etapa_id)
+
+    # ✅ validação: etapa deve pertencer ao pipeline do card (quando houver pipeline)
+    if card.pipeline_id and not etapa.pipelines.filter(pk=card.pipeline_id).exists():
+        return HttpResponseBadRequest("Etapa não pertence ao pipeline do ticket.")
+
+    card.etapa = etapa
+    card.save(update_fields=["etapa", "data_ult_modificacao"])
+    return render(request, "kanban/partials/badge_etapa.html", {"card": card})
+
+
+@login_required
+@require_http_methods(["POST"])
+def card_update_assign(request, card_id):
+    card = get_object_or_404(Card, pk=card_id)
+    user_id = request.POST.get("atribuido_a")
+    if user_id == "":  # limpar
+        card.atribuido_a = None
+        card.save(update_fields=["atribuido_a", "data_ult_modificacao"])
+    else:
+        user = get_object_or_404(User, pk=user_id)
+        card.atribuido_a = user
+        card.save(update_fields=["atribuido_a", "data_ult_modificacao"])
+    # retorna só o badge para substituir
+    return render(request, "kanban/partials/badge_assign.html", {"card": card})
 
 @method_decorator(login_required, name="dispatch")
 class TicketListView(ListView):
