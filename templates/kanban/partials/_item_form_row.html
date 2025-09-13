@@ -1,11 +1,21 @@
-<div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm" data-item-row>
-  {% if form.DELETE %}
-    <input type="checkbox" name="{{ form.DELETE.html_name }}" class="hidden" data-delete-flag>
-  {% endif %}
+{% if form.DELETE %}
+  <input type="checkbox" name="{{ form.DELETE.html_name }}" class="hidden" data-delete-flag>
+{% endif %}
 
-  <div class="flex items-start gap-3">
-    <button type="button" class="mt-2 text-gray-400 hover:text-gray-600 cursor-grab" title="Arraste para reordenar" data-drag-handle>
-      &#8942;&#8942;
+<div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+
+  <!-- Cabeçalho compacto -->
+  <div class="flex items-start gap-3 px-3 py-2 border-b">
+
+    <!-- drag handle -->
+    <button type="button"
+            class="mt-2 text-gray-400 hover:text-gray-600 cursor-grab"
+            title="Arraste para reordenar"
+            data-drag-handle>
+      <!-- ícone de arrastar -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+      </svg>
     </button>
 
     <div class="flex-1">
@@ -22,38 +32,133 @@
           <label class="mb-1 block text-sm font-medium text-gray-900">Prazo (dias)</label>
           {{ form.prazo_dias }}
         </div>
-
-        <div class="md:col-span-12">
-          <label class="mb-1 block text-sm font-medium text-gray-900">Descrição</label>
-          {{ form.descricao }}
-        </div>
-
-        <div class="md:col-span-6">
-          <label class="mb-1 block text-sm font-medium text-gray-900">Atribuído a</label>
-          {{ form.atribuido_a }}
-        </div>
-        <div class="md:col-span-6 flex items-end gap-6">
-          <label class="inline-flex items-center gap-2">
-            {{ form.obrigatorio }} <span class="text-sm text-gray-900">Obrigatório</span>
-          </label>
-          <label class="inline-flex items-center gap-2">
-            {{ form.requer_aprovacao }} <span class="text-sm text-gray-900">Requer aprovação</span>
-          </label>
-        </div>
       </div>
     </div>
 
+    <!-- Ações do cabeçalho com ícones -->
     <div class="flex flex-col items-end gap-2">
+
+      <!-- Mais opções -->
       <button type="button"
-              class="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
-              onclick="duplicateRow(this)">
-        Duplicar
+              class="p-1 text-gray-500 hover:text-gray-700"
+              onclick="toggleChecklistMore(this)"
+              title="Mais opções">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v.01M12 12v.01M12 18v.01" />
+        </svg>
       </button>
+
+      <!-- Remover -->
       <button type="button"
-              class="rounded-md border border-red-200 bg-white px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
-              onclick="removeRow(this)">
-        Remover
+              class="p-1 text-red-500 hover:text-red-700"
+              onclick="removeRow(this)"
+              title="Remover">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3m-4 0h14" />
+        </svg>
       </button>
+
     </div>
   </div>
+
+  <!-- Detalhes (colapsável) -->
+  <div class="px-3 py-3 checklist-more {% if not form.errors %}hidden{% endif %}">
+    <div class="grid grid-cols-12 gap-3">
+      <div class="col-span-12">
+        <label class="mb-1 block text-sm font-medium text-gray-900">Descrição</label>
+        {{ form.descricao }}
+      </div>
+      <div class="col-span-6">
+        <label class="mb-1 block text-sm font-medium text-gray-900">Atribuído a</label>
+        {{ form.atribuido_a }}
+      </div>
+      <div class="col-span-6 flex items-end gap-6">
+        <label class="inline-flex items-center gap-2">
+          {{ form.obrigatorio }} <span class="text-sm text-gray-900">Obrigatório</span>
+        </label>
+        <label class="inline-flex items-center gap-2">
+          {{ form.requer_aprovacao }} <span class="text-sm text-gray-900">Requer aprovação</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
 </div>
+
+<script>
+
+    // >>> CONFIGURE SEU PREFIXO DO FORMSET AQUI <<<
+    const PREFIX = "itens";  // ex.: itens-TOTAL_FORMS, itens-0-*, etc.
+
+    function getContainer() {
+      return document.getElementById(`${PREFIX}-container`) || document.getElementById('itens-container');
+    }
+
+    function updateTotalForms() {
+      const totalEl = document.querySelector(`input[name="${PREFIX}-TOTAL_FORMS"]`);
+      if (!totalEl) return;
+      const rows = getContainer().querySelectorAll('.rounded-lg.border'); // cada item
+      // Conta apenas os que NÃO têm checkbox DELETE marcado
+      const alive = Array.from(rows).filter(r => {
+        const del = r.querySelector('[data-delete-flag]');
+        return !(del && del.checked) && r.style.display !== 'none';
+      });
+      totalEl.value = alive.length;
+    }
+
+    function renumberForms() {
+      // se você tiver um campo "ordem", atualize aqui
+      const rows = getContainer().querySelectorAll('.rounded-lg.border');
+      let idx = 0;
+      rows.forEach(r => {
+        const del = r.querySelector('[data-delete-flag]');
+        const isDeleted = del && del.checked;
+        if (!isDeleted && r.style.display !== 'none') {
+          const ordem = r.querySelector(`[name^="${PREFIX}-"][name$="-ordem"]`);
+          if (ordem) ordem.value = idx;
+          idx += 1;
+        }
+      });
+      updateTotalForms();
+    }
+
+    // Remover item da UI
+    function removeRow(btn) {
+      const row = btn.closest('.rounded-lg.border');
+      if (!row) return;
+
+      // 1) Se é um form EXISTENTE (tem DELETE), marca e esconde
+      const del = row.querySelector('[data-delete-flag]');
+      if (del) {
+        del.checked = true;
+        row.style.display = 'none';
+      } else {
+        // 2) Se é um form NOVO (sem DELETE), remove do DOM
+        row.remove();
+      }
+
+      renumberForms();
+    }
+
+    // (Opcional) se usar Sortable, re-numere ao finalizar drag:
+    document.addEventListener('DOMContentLoaded', function () {
+      const container = getContainer();
+      if (window.Sortable && container) {
+        Sortable.create(container, {
+          handle: '[data-drag-handle]',
+          animation: 150,
+          ghostClass: 'opacity-50',
+          onEnd: renumberForms
+        });
+      }
+    });
+
+
+  function toggleChecklistMore(btn) {
+    const root = btn.closest('.rounded-lg.border');
+    if (!root) return;
+    const more = root.querySelector('.checklist-more');
+    if (more) more.classList.toggle('hidden');
+  }
+</script>
+
