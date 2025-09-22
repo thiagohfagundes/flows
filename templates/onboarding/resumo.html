@@ -1,0 +1,50 @@
+{% extends "onboarding/base.html" %}
+{% block title %}Resumo - Onboarding{% endblock %}
+
+{% block form %}
+<div>
+  <header>
+    <h2 class="text-xl font-semibold">Revise antes de concluir</h2>
+    <p class="mt-1 text-sm text-gray-500">Você pode ajustar depois nas configurações.</p>
+  </header>
+
+  <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bg-gray-50 border rounded-lg p-4">
+      <h3 class="font-bold text-sm mb-1">Pessoa</h3>
+      <p class="text-sm leading-5">
+        {{ pessoa.nome }}<br>
+        <span class="text-gray-600">{{ pessoa.email }}</span>
+      </p>
+    </div>
+    <div class="bg-gray-50 border rounded-lg p-4">
+      <h3 class="font-bold text-sm mb-1">Empresas</h3>
+      <div class="text-sm max-h-28 overflow-auto pr-1">
+        {% for empresa in empresas %}
+          <p class="leading-5">{{ empresa.nome }} <span class="text-gray-500">({{ empresa.tipo }})</span></p>
+        {% empty %}
+          <p class="text-gray-600">Nenhuma</p>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="bg-gray-50 border rounded-lg p-4">
+      <h3 class="font-bold text-sm mb-1">Licenças</h3>
+      <div class="text-sm max-h-28 overflow-auto pr-1">
+        {% for lic in licencas %}
+          <p class="leading-5">{{ lic.license_name }}</p>
+        {% empty %}
+          <p class="text-gray-600">Nenhuma</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <form method="post" class="flex items-center gap-3 pt-4 border-t border-gray-200">
+    {% csrf_token %}
+    <a href="{% url 'clientes:onboarding_processo' %}" class="mt-4 px-5 py-3 border rounded-lg text-gray-700 hover:bg-gray-50">Voltar</a>
+    <button type="submit" class="mt-4 ml-auto px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">
+      Concluir onboarding
+    </button>
+  </form>
+</div>
+{% endblock %}
+

@@ -2,7 +2,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
-from .models import Pessoa
+from .models import Pessoa, OnboardingState
 
 @receiver(post_save, sender=User)
 def create_or_update_pessoa(sender, instance, created, **kwargs):
@@ -13,3 +13,8 @@ def create_or_update_pessoa(sender, instance, created, **kwargs):
         if hasattr(instance, "pessoa") and instance.email and not instance.pessoa.email:
             instance.pessoa.email = instance.email
             instance.pessoa.save()
+
+@receiver(post_save, sender=User)
+def create_onboarding_state(sender, instance, created, **kwargs):
+    if created:
+        OnboardingState.objects.get_or_create(user=instance)

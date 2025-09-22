@@ -1,0 +1,88 @@
+{# step em {'perfil','empresa','integracao','processo','resumo'} #}
+{% with after_perfil='empresa,integracao,processo,resumo' after_empresa='integracao,processo,resumo' after_integracao='processo,resumo' after_processo='resumo' %}
+<ol class="space-y-4">
+  <!-- 1. Perfil -->
+  <li>
+    <div class="w-full p-4 rounded-lg border
+      {% if step == 'perfil' %} text-blue-700 bg-blue-100 border-blue-300
+      {% elif step in after_perfil %} text-green-700 bg-green-50 border-green-300
+      {% else %} text-gray-900 bg-gray-100 border-gray-300
+      {% endif %}">
+      <div class="flex items-center justify-between">
+        <h3 class="font-medium">1. Perfil</h3>
+        {% if step == 'perfil' %}
+          <svg class="w-4 h-4 rtl:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/></svg>
+        {% elif step in after_perfil %}
+          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 12"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5.917 5.724 10.5 15 1.5"/></svg>
+        {% endif %}
+      </div>
+    </div>
+  </li>
+
+  <!-- 2. Empresa -->
+  <li>
+    <div class="w-full p-4 rounded-lg border
+      {% if step == 'empresa' %} text-blue-700 bg-blue-100 border-blue-300
+      {% elif step in after_empresa %} text-green-700 bg-green-50 border-green-300
+      {% else %} text-gray-900 bg-gray-100 border-gray-300
+      {% endif %}">
+      <div class="flex items-center justify-between">
+        <h3 class="font-medium">2. Empresa</h3>
+        {% if step == 'empresa' %}
+          <svg class="w-4 h-4 rtl:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/></svg>
+        {% elif step in after_empresa %}
+          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 12"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5.917 5.724 10.5 15 1.5"/></svg>
+        {% endif %}
+      </div>
+    </div>
+  </li>
+
+  <!-- 3. Integração -->
+  <li>
+    <div class="w-full p-4 rounded-lg border
+      {% if step == 'integracao' %} text-blue-700 bg-blue-100 border-blue-300
+      {% elif step in after_integracao %} text-green-700 bg-green-50 border-green-300
+      {% else %} text-gray-900 bg-gray-100 border-gray-300
+      {% endif %}">
+      <div class="flex items-center justify-between">
+        <h3 class="font-medium">3. Integração</h3>
+        {% if step == 'integracao' %}
+          <svg class="w-4 h-4 rtl:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/></svg>
+        {% elif step in after_integracao %}
+          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 12"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5.917 5.724 10.5 15 1.5"/></svg>
+        {% endif %}
+      </div>
+    </div>
+  </li>
+
+  <!-- 4. Processo -->
+  <li>
+    <div class="w-full p-4 rounded-lg border
+      {% if step == 'processo' %} text-blue-700 bg-blue-100 border-blue-300
+      {% elif step in after_processo %} text-green-700 bg-green-50 border-green-300
+      {% else %} text-gray-900 bg-gray-100 border-gray-300
+      {% endif %}">
+      <div class="flex items-center justify-between">
+        <h3 class="font-medium">4. Processo</h3>
+        {% if step == 'processo' %}
+          <svg class="w-4 h-4 rtl:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/></svg>
+        {% elif step in after_processo %}
+          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 12"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5.917 5.724 10.5 15 1.5"/></svg>
+        {% endif %}
+      </div>
+    </div>
+  </li>
+
+  <!-- 5. Resumo -->
+  <li>
+    <div class="w-full p-4 rounded-lg border
+      {% if step == 'resumo' %} text-blue-700 bg-blue-100 border-blue-300
+      {% else %} text-gray-900 bg-gray-100 border-gray-300
+      {% endif %}">
+      <div class="flex items-center justify-between">
+        <h3 class="font-medium">5. Resumo</h3>
+      </div>
+    </div>
+  </li>
+</ol>
+{% endwith %}

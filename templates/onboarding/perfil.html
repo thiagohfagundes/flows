@@ -1,0 +1,80 @@
+{% extends "onboarding/base.html" %}
+{% block title %}Perfil - Onboarding{% endblock %}
+
+{% block form %}
+<form method="post" class="space-y-6">
+  {% csrf_token %}
+
+  <header>
+    <h2 class="text-xl font-semibold">Sobre você</h2>
+    <p class="mt-1 text-sm text-gray-500">Essas infos personalizam sua experiência no app.</p>
+  </header>
+
+  {% if form.non_field_errors %}
+    <div class="rounded-lg border border-red-300 bg-red-50 p-3 text-red-700 text-sm">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+
+  <!-- Grid fluido -->
+  <div class="grid grid-cols-12 gap-6">
+    <div class="col-span-12">
+      <label class="mb-1 block text-sm font-medium text-gray-900">Nome</label>
+      {{ form.nome }}
+    </div>
+
+    <div class="col-span-12 md:col-span-6">
+      <label class="mb-1 block text-sm font-medium text-gray-900">Email</label>
+      {{ form.email }}
+    </div>
+
+    <div class="col-span-12 md:col-span-6">
+      <label class="mb-1 block text-sm font-medium text-gray-900">Cargo</label>
+      {{ form.cargo }}
+    </div>
+
+    <div class="col-span-12 md:col-span-6">
+      <label class="mb-1 block text-sm font-medium text-gray-900">Telefone</label>
+      {{ form.telefone }}
+    </div>
+
+    <div class="col-span-12 md:col-span-6">
+      <label class="mb-1 block text-sm font-medium text-gray-900">Cidade</label>
+      {{ form.cidade }}
+    </div>
+
+    <div class="col-span-12">
+      <label class="mb-1 block text-sm font-medium text-gray-900">LinkedIn</label>
+      {{ form.linkedin_url }}
+      <p class="mt-1 text-xs text-gray-500">URL do seu perfil (opcional)</p>
+    </div>
+
+    <div class="col-span-12">
+      <label class="mb-1 block text-sm font-medium text-gray-900">Website</label>
+      {{ form.website_url }}
+    </div>
+
+    <div class="col-span-12">
+      <label class="mb-2 block text-sm font-medium text-gray-900">Preferências</label>
+      <div class="flex items-center gap-3">
+        <input type="checkbox"
+               name="{{ form.recebe_emails.html_name }}"
+               id="{{ form.recebe_emails.id_for_label }}"
+               class="sr-only peer"
+               {% if form.recebe_emails.value %}checked{% endif %} />
+        <label for="{{ form.recebe_emails.id_for_label }}"
+               class="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200
+                      after:absolute after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all
+                      peer-checked:bg-blue-600 peer-checked:after:translate-x-5 cursor-pointer"></label>
+        <span class="text-sm text-gray-900">Receber comunicações por email</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex justify-end pt-2 border-t border-gray-200">
+    <button type="submit" class="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+      Próximo
+    </button>
+  </div>
+</form>
+{% endblock %}

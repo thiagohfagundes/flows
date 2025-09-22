@@ -1,0 +1,44 @@
+{% extends "onboarding/base.html" %}
+{% block title %}Integração - Onboarding{% endblock %}
+
+{% block form %}
+<form method="post" class="space-y-6">
+  {% csrf_token %}
+
+  <header>
+    <h2 class="text-xl font-semibold">Conectar ao Superlógica</h2>
+    <p class="mt-1 text-sm text-gray-500">Esta etapa é opcional. Você pode pular e conectar depois nas configurações.</p>
+  </header>
+
+  {% if form.non_field_errors %}
+    <div class="rounded-lg border border-red-300 bg-red-50 p-3 text-red-700 text-sm">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+
+  <div class="grid grid-cols-12 gap-6">
+    <div class="col-span-12 md:col-span-6">
+      <label class="mb-1 block text-sm font-medium text-gray-900">License name (subdomínio)</label>
+      {{ form.license_name }}
+    </div>
+    <div class="col-span-12 md:col-span-6">
+      <label class="mb-1 block text-sm font-medium text-gray-900">Apelido (opcional)</label>
+      {{ form.apelido }}
+    </div>
+  </div>
+
+  <div class="flex items-center gap-3 pt-2 border-t border-gray-200">
+    <a href="{% url 'clientes:onboarding_empresa' %}" class="mt-4 px-5 py-3 border rounded-lg text-gray-700 hover:bg-gray-50">Voltar</a>
+
+    <button type="submit" name="pular" value="1" formnovalidate
+            class="mt-4 px-5 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+      Pular
+    </button>
+
+    <button type="submit" class="mt-4 ml-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+      Conectar
+    </button>
+  </div>
+</form>
+{% endblock %}
+

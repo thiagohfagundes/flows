@@ -61,3 +61,52 @@ class ClienteLicenseForm(forms.ModelForm):
     def clean_apelido(self):
         ap = (self.cleaned_data.get("apelido") or "").strip()
         return ap or None
+
+
+_INPUT = (
+    "block w-full h-11 rounded-lg border border-gray-300 bg-white "
+    "px-3.5 text-base text-gray-900 "
+    "focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+)
+
+class PessoaForm(forms.ModelForm):
+    class Meta:
+        model = Pessoa
+        fields = ["nome","email","cargo","telefone","cidade","linkedin_url","website_url","recebe_emails"]
+        widgets = {
+            "nome":         forms.TextInput(attrs={"class": _INPUT, "placeholder": "Seu nome completo", "autocomplete": "name"}),
+            "email":        forms.EmailInput(attrs={"class": _INPUT, "placeholder": "seu@email.com", "autocomplete": "email"}),
+            "cargo":        forms.TextInput(attrs={"class": _INPUT, "placeholder": "Ex.: Coordenador(a)"}),
+            "telefone":     forms.TextInput(attrs={"class": _INPUT, "placeholder": "(11) 99999-0000", "inputmode": "tel"}),
+            "cidade":       forms.TextInput(attrs={"class": _INPUT, "placeholder": "Cidade/UF"}),
+            "linkedin_url": forms.URLInput(attrs={"class": _INPUT, "placeholder": "https://www.linkedin.com/in/seu-perfil"}),
+            "website_url":  forms.URLInput(attrs={"class": _INPUT, "placeholder": "https://exemplo.com/"}),
+            # checkbox real oculto para o switch no template
+            "recebe_emails": forms.CheckboxInput(attrs={"class": "sr-only peer"}),
+        }
+
+class EmpresaForm(forms.ModelForm):
+    class Meta:
+        model = Empresa
+        fields = ["nome","email","tipo","telefone","cidade"]
+        widgets = {
+            "nome":     forms.TextInput(attrs={"class": _INPUT, "placeholder": "Razão social / Nome fantasia"}),
+            "email":    forms.EmailInput(attrs={"class": _INPUT, "placeholder": "contato@empresa.com"}),
+            "tipo":     forms.Select(attrs={"class": _INPUT}),
+            "telefone": forms.TextInput(attrs={"class": _INPUT, "placeholder": "(11) 0000-0000"}),
+            "cidade":   forms.TextInput(attrs={"class": _INPUT, "placeholder": "Cidade/UF"}),
+        }
+
+class IntegracaoForm(forms.ModelForm):
+    class Meta:
+        model = ClienteLicense
+        fields = ["license_name","apelido"]
+        widgets = {
+            "license_name": forms.TextInput(attrs={"class": _INPUT, "placeholder": "seusubdominio"}),
+            "apelido":      forms.TextInput(attrs={"class": _INPUT, "placeholder": "Opcional"}),
+        }
+
+class PrimeiroProcessoForm(forms.Form):
+    """Placeholder até definirmos seu modelo final de processo."""
+    nome_processo = forms.CharField(max_length=120, label="Nome do processo")
+    objetivo = forms.CharField(widget=forms.Textarea, required=False, label="Objetivo (opcional)")

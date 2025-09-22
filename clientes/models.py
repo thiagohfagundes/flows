@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 # Create your models here.
 TIPO_CLIENTE = (
@@ -56,3 +57,27 @@ class ClienteLicense(models.Model):
 
     def __str__(self):
         return f"{self.license_name} ({self.cliente})"
+
+class OnboardingStep(models.TextChoices):
+    PERFIL = "perfil", "Perfil"
+    EMPRESA = "empresa", "Empresa"
+    INTEGRACAO = "integracao", "Integração"
+    PROCESSO = "processo", "Primeiro Processo"
+    RESUMO = "resumo", "Resumo"
+
+class OnboardingState(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="onboarding")
+    current_step = models.CharField(max_length=20, choices=OnboardingStep.choices, default=OnboardingStep.PERFIL)
+    onboarding_started_at = models.DateTimeField(default=timezone.now)
+    onboarding_completed_at = models.DateTimeField(null=True, blank=True)
+
+    def is_completed(self):
+        return self.onboarding_completed_at is not None
+
+    def advance(self, next_step: str):
+        self.current_step = next_step
+        self.save(update_fields=["current_step"])
+
+    def complete(self):
+        self.onboarding_completed_at = timezone.now()
+        self.save(update_fields=["onboarding_completed_at"])

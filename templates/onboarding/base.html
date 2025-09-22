@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>{% block title %}Onboarding{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <main class="min-h-screen w-full flex items-start justify-center pt-10 px-4">
+    <!-- 👇 encolhemos o card de 6xl -> 4xl -->
+    <div class="w-full max-w-4xl bg-white border border-gray-200 rounded-2xl shadow p-6">
+      <h1 class="text-2xl font-bold mb-6">Onboarding</h1>
+
+      <div class="flex gap-8">
+        <!-- Stepper permanece fixo -->
+        <aside class="w-64 shrink-0">
+          {% include "onboarding/_steps.html" with step=step %}
+        </aside>
+
+        <!-- Conteúdo limitado para não “esticar” -->
+        <section class="flex-1 min-w-0">
+          <div class="max-w-2xl">  <!-- 👈 limite de largura do conteúdo -->
+            {% block form %}{% endblock %}
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
+
+
+
+
