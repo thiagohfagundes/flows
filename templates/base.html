@@ -13,6 +13,9 @@
     <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
 
+    <!-- Apex Charts (CDN dev) -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.46.0/dist/apexcharts.min.js"></script>
+
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 
@@ -97,6 +100,12 @@
 
         <ul id="submenu-processos"
             class="mt-1 space-y-1 pl-9 {% if name == 'pipelines' or name == 'tickets_list' %}{% else %}hidden{% endif %}">
+          <li>
+            <a href="{% url 'dashboards:dashboard' %}"
+               class="flex items-center p-2 rounded-lg hover:bg-gray-100 {% if name == 'dashboard' %}bg-gray-100 text-gray-900{% else %}text-gray-700{% endif %}">
+              <span class="truncate">Visão geral</span>
+            </a>
+          </li>
           <li>
             <a href="{% url 'kanban:pipelines' %}"
                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {% if name == 'pipelines' %}bg-gray-100 text-gray-900{% else %}text-gray-700{% endif %}">

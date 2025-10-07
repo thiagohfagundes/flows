@@ -11,4 +11,5 @@ urlpatterns = [
     path('importador/', include('importador_erp.urls')),
     path('meus-clientes/', views.MeusClientesListView.as_view(), name='meus_clientes'),
     path("meus-contratos/", views.ContratosLocacaoListView.as_view(), name="meus_contratos"),
+    path('dashboard/', include('dashboards.urls')),
 ]

@@ -40,12 +40,14 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     ".railway.app",
-    "127.0.0.1"
+    "127.0.0.1",
+    "localhost"
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://*.railway.app",
-    "http://127.0.0.1"
+    "http://127.0.0.1",
+    "http://localhost"
 ]
 
 # Application definition
@@ -64,6 +66,7 @@ INSTALLED_APPS = [
     'kanban_templates',
     'integrador',
     'importador_erp',
+    'dashboards'
 ]
 
 MIDDLEWARE = [
@@ -156,7 +159,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_URL = 'login'
-LOGOUT_URL = 'logout'
+LOGIN_URL = 'clientes:login'
+LOGOUT_URL = 'clientes:logout'
 LOGIN_REDIRECT_URL = 'pipelines'
 LOGOUT_REDIRECT_URL = 'pipelines'

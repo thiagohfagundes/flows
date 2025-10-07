@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.dateparse import parse_date
 from collections import defaultdict
-
+from django.db.models import Q
 from kanban.models import Pipeline
 from .models import PipelineTemplate
 from .services import build_template_json_from_pipeline  # ou serialize_pipeline/padrão que você adotou
@@ -48,7 +48,9 @@ def template_from_pipeline(request, pipeline_id):
 
 @login_required
 def template_list(request):
-    qs = PipelineTemplate.objects.select_related("criado_por")
+    qs = PipelineTemplate.objects.select_related("criado_por").filter(
+        Q(criado_por=request.user) | Q(visibilidade="public")
+    )
 
     # ------- filtros -------
     criado_por = request.GET.get("criado_por")  # "me" ou user_id

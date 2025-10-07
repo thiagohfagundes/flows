@@ -74,7 +74,7 @@ def perfil(request):
                 user_form.save()
                 pessoa_form.save()
                 messages.success(request, "Perfil atualizado com sucesso!")
-                return redirect("perfil")
+                return redirect("clientes:perfil_usuario")
         elif which == "empresa":
             empresa_form = EmpresaQuickForm(request.POST)
             if empresa_form.is_valid():
@@ -84,7 +84,7 @@ def perfil(request):
                 emp.save()
                 emp.colaboradores.add(pessoa)
                 messages.success(request, "Empresa criada e vinculada!")
-                return redirect("perfil")
+                return redirect("clientes:perfil_usuario")
 
     minhas_empresas = Empresa.objects.filter(colaboradores=pessoa).order_by("-data_ult_modificacao")[:8]
     return render(request, "clientes/perfil.html", {

@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+{% block title %}Dashboard: {{ pipeline.nome }}{% endblock %}
+
+{% block content %}
+<style>
+  /* apenas ajustes leves necessários */
+  .chart-card { overflow: hidden; border-radius: 12px; }
+  #tempo-etapa-chart, #distribuicao-finalizacao-chart, #data-labels-chart, #radial-chart {
+    overflow: hidden;
+  }
+  .apexcharts-legend { color: #475569 !important; }
+  .apexcharts-tooltip { border-radius: 8px !important; font-size: 13px !important; }
+  /* centraliza o conteúdo do container do radial */
+  #sla-radial-wrap { display: flex; align-items: center; justify-content: center; width: 100%; }
+</style>
+
+<div class="px-4 py-6">
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-900">Visão geral do processo: {{ pipeline.nome }}</h1>
+      <p class="text-sm text-gray-500">Visão geral e métricas de desempenho do processo.</p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <button id="time-filter-button" aria-haspopup="listbox" aria-expanded="false" data-dropdown-toggle="time-filter-dropdown"
+                class="flex items-center h-10 px-4 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 focus:outline-none"
+                type="button">
+          <span id="time-filter-label">Últimos 30 dias</span>
+          <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+          </svg>
+        </button>
+        <div id="time-filter-dropdown" class="z-20 hidden w-48 bg-white rounded-lg shadow-xl mt-2" role="listbox" aria-labelledby="time-filter-button">
+          <ul class="p-2 space-y-1 text-sm text-gray-700">
+            <li><a href="#" data-range="7" class="time-range block px-4 py-2 hover:bg-gray-100 rounded-lg">Últimos 7 dias</a></li>
+            <li><a href="#" data-range="30" class="time-range block px-4 py-2 hover:bg-gray-100 rounded-lg font-semibold text-blue-600">Últimos 30 dias</a></li>
+            <li><a href="#" data-range="month" class="time-range block px-4 py-2 hover:bg-gray-100 rounded-lg">Mês atual</a></li>
+            <li><a href="#" data-range="custom" class="time-range block px-4 py-2 hover:bg-gray-100 rounded-lg">Personalizado...</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <label for="pipeline-select" class="sr-only">Pipeline</label>
+        <div class="relative">
+          <select id="pipeline-select" class="h-10 px-3 text-sm border border-gray-300 rounded-lg bg-white">
+            <option value="" selected>Selecionar pipeline</option>
+            </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <p class="text-sm font-medium text-gray-500">Cards Criados</p>
+      <div class="mt-1 flex items-center justify-between">
+        <div>
+          <span class="text-3xl font-bold text-gray-900" id="kpi-created">{{ pipeline_metrics.created_count }}</span>
+          <div class="text-xs text-gray-500">Total de cards no processo.</div>
+        </div>
+        <div class="w-28 h-10" id="sparkline-created" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <p class="text-sm font-medium text-gray-500">Cards Concluídos</p>
+      <div class="mt-1 flex items-center justify-between">
+        <div>
+          <span class="text-3xl font-bold text-green-600" id="kpi-completed">{{ pipeline_metrics.completed_count }}</span>
+          <div class="text-xs text-green-600 font-medium" id="kpi-conversion">{{ pipeline_metrics.conversion_percent }}</div>
+        </div>
+        <div class="w-28 h-10" id="sparkline-completed" aria-hidden="true"></div>
+      </div>
+      <p class="text-xs text-gray-500 mt-1">Cards que chegaram a uma etapa finalizada.</p>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <p class="text-sm font-medium text-gray-500">Cards Atrasados</p>
+      <div class="mt-1 flex items-center justify-between">
+        <div>
+          <span class="text-3xl font-bold text-red-600" id="kpi-overdue">{{ pipeline_metrics.overdue_count }}</span>
+          <div class="text-xs text-red-600 font-medium" id="kpi-overdue-percent">{{ pipeline_metrics.overdue_percent }}</div>
+        </div>
+        <div class="w-28 h-10" id="sparkline-overdue" aria-hidden="true"></div>
+      </div>
+      <p class="text-xs text-gray-500 mt-1">Cards que excederam o SLA ou prazo.</p>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <p class="text-sm font-medium text-gray-500">Tempo Médio (Finalização)</p>
+      <div class="mt-1 flex items-center justify-between">
+        <div>
+          <span class="text-3xl font-bold text-gray-900" id="kpi-avg-time">{{ pipeline_metrics.avg_completion_time }}</span>
+          <div class="text-xs text-yellow-600 font-medium">Meta: {{ pipeline_metrics.target_time }}</div>
+        </div>
+        <div class="w-28 h-10" id="sparkline-avg-time" aria-hidden="true"></div>
+      </div>
+      <p class="text-xs text-gray-500 mt-1">Tempo desde a criação até a conclusão.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div class="lg:col-span-2 rounded-xl border border-gray-200 bg-white p-6 shadow-sm chart-card">
+      <h2 class="text-lg font-semibold text-gray-900 mb-2">Fluxo de Cards: Entradas vs. Saídas</h2>
+      <p class="text-sm text-gray-500 mb-4">Cards que entraram (criados) e saíram (concluídos) no período.</p>
+
+      <div id="flow-line-chart-container" class="w-full">
+        <div class="h-64 rounded-lg overflow-hidden">
+            <div id="data-labels-chart" class="w-full h-full" role="img" aria-label="Gráfico de área mostrando entradas e saídas"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm chart-card">
+    <h2 class="text-lg font-semibold text-gray-900 mb-1">Aderência ao Prazo (SLA)</h2>
+    <p class="text-sm text-gray-500 mb-4">Mede o cumprimento dos prazos estabelecidos.</p>
+
+    <div style="display:flex;align-items:center;justify-content:center;">
+        <div style="width:320px; max-width:100%; height:260px; display:flex;align-items:center;justify-content:center;">
+        <div id="radial-chart" style="width:100%; height:100%;"></div>
+        </div>
+    </div>
+    </div>
+  </div>
+
+  <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm chart-card">
+          <h2 class="text-lg font-semibold text-gray-900 mb-1">Tempo Médio Gasto por Etapa</h2>
+          <p class="text-sm text-gray-500 mb-4">Média de dias que um card gasta em cada fase do processo.</p>
+
+          <div id="chart-tempo-etapa" class="w-full h-80">
+              <div id="tempo-etapa-chart" class="w-full h-full"></div>
+          </div>
+      </div>
+
+      <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm chart-card">
+          <h2 class="text-lg font-semibold text-gray-900 mb-1">Distribuição do Tempo de Finalização</h2>
+          <p class="text-sm text-gray-500 mb-4">Frequência de tempo (em dias) que os cards levam para serem concluídos.</p>
+
+          <div id="chart-distribuicao-finalizacao" class="w-full h-80">
+              <div id="distribuicao-finalizacao-chart" class="w-full h-full"></div>
+          </div>
+      </div>
+  </div>
+</div>
+
+<script>
+  // ---------- Util: dropdown toggle (sem alteração) ----------
+  (function() {
+    const btn = document.getElementById('time-filter-button');
+    const dropdown = document.getElementById('time-filter-dropdown');
+    const label = document.getElementById('time-filter-label');
+
+    if (btn && dropdown) {
+      btn.addEventListener('click', (e) => {
+        const isHidden = dropdown.classList.contains('hidden');
+        dropdown.classList.toggle('hidden', !isHidden);
+        btn.setAttribute('aria-expanded', String(!isHidden));
+      });
+
+      document.querySelectorAll('.time-range').forEach(a => {
+        a.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const range = a.dataset.range || '30';
+          label.textContent = a.textContent.trim();
+          dropdown.classList.add('hidden');
+          btn.setAttribute('aria-expanded', 'false');
+
+          const event = new CustomEvent('dashboard:range-changed', { detail: { range }});
+          window.dispatchEvent(event);
+        });
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+          dropdown.classList.add('hidden');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+  })();
+
+  // ---------- Charting (ApexCharts): REMOVIDOS OS DEFAULTS E USADO O |safe CORRETAMENTE ----------
+
+  // 1. Dados do Fluxo (Line/Area Chart)
+  const FLOW_CATEGORIES = {{ flow_categories|safe }}; // Removido: |default:"[...]"
+  const FLOW_CREATED = {{ flow_created|safe }};       // Removido: |default:"[...]"
+  const FLOW_COMPLETED = {{ flow_completed|safe }};   // Removido: |default:"[...]"
+
+  // 2. Dados do Tempo por Etapa (Bar Chart)
+  const TEMPO_ETAPAS_CATS = {{ tempo_etapas_categories|safe }}; // Removido: |default:"[...]"
+  const TEMPO_ETAPAS_VALUES = {{ tempo_etapas_values|safe }};   // Removido: |default:"[...]"
+
+  // 3. Dados da Distribuição de Finalização (Bar Chart)
+  const DISTRIB_CATS = {{ distrib_categories|safe }}; // Removido: |default:"[...]"
+  const DISTRIB_VALUES = {{ distrib_values|safe }};   // Removido: |default:"[...]"
+  
+  // 4. Dados para Sparklines
+  // Usamos JSON.parse para garantir a leitura do array, caso o Django esteja sanitizando,
+  // mas o pipe |safe já deve ser suficiente para garantir que é um JSON string.
+  const sparkCreated = JSON.parse('{{ pipeline_metrics.created_trend|safe }}');
+  const sparkCompleted = JSON.parse('{{ pipeline_metrics.completed_trend|safe }}');
+  const sparkOverdue = JSON.parse('{{ pipeline_metrics.overdue_trend|safe }}');
+  const sparkAvg = JSON.parse('{{ pipeline_metrics.avg_time_trend|safe }}');
+  
+  // 5. Dado do SLA (Radial Chart)
+  const slaValue = Number('{{ pipeline_metrics.sla_percent_on_time }}'); // Removido: |default:67
+
+  // Funções de Charting (sem alteração na lógica, apenas no consumo das variáveis acima)
+  function niceYmax(arr){
+    if(!Array.isArray(arr) || arr.length===0) return undefined;
+    const max = Math.max(...arr);
+    const factor = max < 10 ? 1.6 : 1.25;
+    const ceil = Math.ceil(max * factor);
+    const mag = Math.pow(10, Math.floor(Math.log10(ceil)));
+    return Math.ceil(ceil / mag) * mag;
+  }
+
+  if (typeof ApexCharts === 'undefined') {
+    console.warn('ApexCharts não encontrado. Inclua o script de ApexCharts antes deste template.');
+  } else {
+    // sparklines
+    function renderSparkline(selector, seriesData) {
+      // Verifica se há dados antes de renderizar
+      if (!seriesData || seriesData.length === 0) return; 
+      const opts = {
+        chart: { type: 'area', sparkline: { enabled: true }, height: 40 },
+        series: [{ data: seriesData }],
+        stroke: { width: 2, curve: 'smooth' },
+        fill: { opacity: 0.18 },
+        tooltip: { enabled: false },
+        colors: ['#60a5fa']
+      };
+      const el = document.querySelector(selector);
+      if (el) new ApexCharts(el, opts).render();
+    }
+    
+    renderSparkline('#sparkline-created', sparkCreated);
+    renderSparkline('#sparkline-completed', sparkCompleted);
+    renderSparkline('#sparkline-overdue', sparkOverdue);
+    renderSparkline('#sparkline-avg-time', sparkAvg);
+
+    // flow chart 
+    (function() {
+      const cats = Array.isArray(FLOW_CATEGORIES) ? FLOW_CATEGORIES : [];
+      const s1 = Array.isArray(FLOW_CREATED) ? FLOW_CREATED.slice() : [];
+      const s2 = Array.isArray(FLOW_COMPLETED) ? FLOW_COMPLETED.slice() : [];
+
+      function alignArray(arr, len) {
+        if (arr.length === len) return arr;
+        const out = arr.slice(0, len);
+        while (out.length < len) out.push(out.length ? out[out.length-1] : 0);
+        return out;
+      }
+
+      const len = cats.length || Math.max(s1.length, s2.length);
+      const seriesCreated = alignArray(s1, len);
+      const seriesCompleted = alignArray(s2, len);
+
+      const options = {
+        dataLabels: { enabled: false },
+        grid: { show: false, padding: { left: 12, right: 12, top: -16 } },
+        series: [
+          { name: "Entradas", data: seriesCreated, color: "#1A56DB" },
+          { name: "Saídas", data: seriesCompleted, color: "#7E3BF2" },
+        ],
+        chart: { height: "100%", type: "area", toolbar: { show: false }, fontFamily: "Inter, sans-serif" },
+        tooltip: { enabled: true, y: { formatter: function(val) { return val; } } },
+        legend: { show: true, position: 'top' },
+        fill: { type: "gradient", gradient: { opacityFrom: 0.45, opacityTo: 0.02 } },
+        stroke: { width: 3 },
+        xaxis: { categories: cats, labels: { rotate: -10 } },
+        yaxis: { labels: { formatter: function(v){ return v; } } },
+        responsive: [{ breakpoint: 768, options: { chart: { height: 300 } } }]
+      };
+      new ApexCharts(document.getElementById("data-labels-chart"), options).render();
+    })();
+
+    // SLA radial
+    (function(){
+    if (typeof ApexCharts === 'undefined') {
+        console.warn('ApexCharts não encontrado para SLA.');
+        return;
+    }
+
+    var options = {
+        series: [slaValue],
+        chart: {
+        height: 260,
+        type: 'radialBar',
+        offsetY: -10,
+        toolbar: { show: false }
+        },
+        plotOptions: {
+        radialBar: {
+            startAngle: -135,
+            endAngle: 135,
+            hollow: {
+            size: '65%'
+            },
+            dataLabels: {
+            name: {
+                fontSize: '14px',
+                color: '#475569',
+                offsetY: 90,
+                formatter: function() { return 'Dentro do SLA'; }
+            },
+            value: {
+                offsetY: 40,
+                fontSize: '26px',
+                color: '#0f172a',
+                formatter: function (val) {
+                return val + "%";
+                }
+            }
+            }
+        }
+        },
+        fill: {
+        type: 'gradient',
+        gradient: {
+            shade: 'dark',
+            shadeIntensity: 0.15,
+            inverseColors: false,
+            opacityFrom: 1,
+            opacityTo: 1,
+            stops: [0, 50, 65, 91]
+        },
+        },
+        stroke: {
+        dashArray: 4,
+        lineCap: 'butt'
+        },
+        labels: ['Dentro do SLA'],
+        tooltip: { enabled: false },
+        legend: { show: false },
+        responsive: [
+        {
+            breakpoint: 640,
+            options: {
+            chart: { height: 200 },
+            plotOptions: { radialBar: { hollow: { size: '60%' } } }
+            }
+        }
+        ]
+    };
+
+    // destroy previous if exists
+    if (window.__slaChart instanceof ApexCharts) {
+        try { window.__slaChart.destroy(); } catch(e) {}
+    }
+    window.__slaChart = new ApexCharts(document.querySelector("#radial-chart"), options);
+    window.__slaChart.render();
+    })();
+
+    // Tempo Médio por Etapa (bar)
+    (function(){
+      const yMax = niceYmax(TEMPO_ETAPAS_VALUES);
+      const opts = {
+        chart: { type: 'bar', height: 340, toolbar: { show: false } },
+        series: [{ name: 'Dias (média)', data: TEMPO_ETAPAS_VALUES }],
+        plotOptions: { bar: { borderRadius: 8, columnWidth: '50%' } },
+        dataLabels: { enabled: true, formatter: function(val){ return val + 'd'; }, style: { fontSize: '12px' } },
+        xaxis: { categories: TEMPO_ETAPAS_CATS, labels: { rotate: -10 } },
+        // Verifica se yMax existe antes de usar o max
+        yaxis: { max: yMax, tickAmount: 5, title: { text: 'Dias' } }, 
+        colors: ['#2563eb'],
+        tooltip: { y: { formatter: function(val){ return val + ' dias'; } } },
+        grid: { borderColor: '#f1f5f9' }
+      };
+      new ApexCharts(document.getElementById('tempo-etapa-chart'), opts).render();
+    })();
+
+    // Distribuição do Tempo de Finalização (bar)
+    (function(){
+      const yMax = niceYmax(DISTRIB_VALUES);
+      const opts = {
+        chart: { type: 'bar', height: 340, toolbar: { show: false } },
+        series: [{ name: 'Quantidade de cards', data: DISTRIB_VALUES }],
+        plotOptions: { bar: { borderRadius: 6, horizontal: false, columnWidth: '55%' } },
+        xaxis: { categories: DISTRIB_CATS },
+        // Verifica se yMax existe antes de usar o max
+        yaxis: { max: yMax, tickAmount: 5, title: { text: 'Quantidade' } }, 
+        dataLabels: { enabled: true },
+        tooltip: { y: { formatter: function(val){ return val + ' cards'; } } },
+        grid: { borderColor: '#f1f5f9' }
+      };
+      new ApexCharts(document.getElementById('distribuicao-finalizacao-chart'), opts).render();
+    })();
+
+    // re-render on range change (placeholder)
+    window.addEventListener('dashboard:range-changed', (e) => {
+      console.log('range changed to', e.detail.range);
+      // Futuramente: aqui você fará uma requisição HTMX (hx-get) para a sua view
+      // para buscar os novos dados (KPIs e Gráficos) para o range de tempo selecionado.
+    });
+
+  } // end if apex
+</script>
+{% endblock %}
