@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Configurações · {{ empresa.nome }}{% endblock %}
+
+{% block content %}
+<div class="container px-4 py-8">
+  <div class="bg-white rounded-2xl shadow-sm p-6">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h1 class="text-xl font-semibold text-gray-900">{{ empresa.nome }}</h1>
+        <p class="text-gray-500 text-sm">{{ empresa.get_tipo_display }}{% if empresa.cidade %} • {{ empresa.cidade }}{% endif %}</p>
+        <p class="text-xs text-gray-400 mt-1">Criado em {{ empresa.data_criacao|date:"d/m/Y" }} • Última modificação {{ empresa.data_ult_modificacao|date:"d/m/Y H:i" }}</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="{% url 'clientes:perfil_usuario' %}" class="px-3 py-2 rounded-lg border">Voltar</a>
+      </div>
+    </div>
+
+    <div class="mt-6 border-b">
+      <nav class="flex space-x-2 text-sm" role="tablist" aria-label="Aba da empresa">
+        <button
+          hx-get="{% url 'clientes:empresa_info_partial' empresa.pk %}" 
+          hx-target="#empresa-tab-content"
+          hx-swap="innerHTML"
+          class="px-3 py-2 rounded-t-lg border-b-2 border-transparent hover:text-gray-700">
+          Dados
+        </button>
+
+        <button
+          hx-get="{% url 'clientes:empresa_colaboradores_partial' empresa.pk %}"
+          hx-target="#empresa-tab-content"
+          hx-swap="innerHTML"
+          class="px-3 py-2 rounded-t-lg border-b-2 border-transparent hover:text-gray-700">
+          Colaboradores
+        </button>
+
+        <button
+          hx-get="{% url 'clientes:empresa_licencas_partial' empresa.pk %}"
+          hx-target="#empresa-tab-content"
+          hx-swap="innerHTML"
+          class="px-3 py-2 rounded-t-lg border-b-2 border-transparent hover:text-gray-700">
+          Licenças
+        </button>
+      </nav>
+    </div>
+
+    <div id="empresa-tab-content" class="mt-6">
+      <!-- Conteúdo carregado por HTMX; por padrão carregamos os dados -->
+      <div hx-get="{% url 'clientes:empresa_info_partial' empresa.pk %}" hx-trigger="load" hx-swap="innerHTML"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal container (Flowbite ou simples) -->
+<div id="htmx-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="bg-black/50 absolute inset-0"></div>
+  <div class="relative bg-white rounded-2xl shadow-lg max-w-2xl w-full p-6 z-10">
+    <div class="modal-body">
+      <!-- HTMX injetará o formulário aqui -->
+    </div>
+    <div class="mt-4 text-right">
+      <button onclick="document.getElementById('htmx-modal').classList.add('hidden')" class="px-3 py-2 border rounded">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- pequeno script para abrir modal quando conteúdo for carregado -->
+<script>
+  document.body.addEventListener('htmx:afterSwap', (evt) => {
+    // se o swap foi para o modal-body dentro do #htmx-modal, mostramos o modal
+    const detail = evt.detail;
+    if (!detail) return;
+    const target = detail.target;
+    if (!target) return;
+    if (target.closest && target.closest('#htmx-modal')) {
+      document.getElementById('htmx-modal').classList.remove('hidden');
+    }
+  });
+
+  // garantir que ao submeter o form que responde no #empresa-colaboradores-container o modal fecha
+  document.body.addEventListener('htmx:beforeOnLoad', (evt) => {
+    // noop - mantemos padrão. Quando HTMX substituir o container principal, o modal pode fechar via evento:
+  });
+
+  // fecha o modal quando a lista de colaboradores foi atualizada (swap no #empresa-colaboradores-container)
+  document.body.addEventListener('htmx:afterSwap', (evt) => {
+    const t = evt.detail && evt.detail.target;
+    if (t && t.id === 'empresa-colaboradores-container') {
+      // fechar modal se estiver aberto
+      const m = document.getElementById('htmx-modal');
+      if (m && !m.classList.contains('hidden')) m.classList.add('hidden');
+    }
+  });
+</script>
+
+<script>
+  // abrir modal quando algo for injetado dentro dele
+  document.body.addEventListener('htmx:afterSwap', (evt) => {
+    const target = evt.detail && evt.detail.target;
+    if (!target) return;
+    if (target.closest && target.closest('#htmx-modal')) {
+      document.getElementById('htmx-modal').classList.remove('hidden');
+    }
+  });
+
+  // fechar modal quando a lista de colaboradores for atualizada (swap no container)
+  document.body.addEventListener('htmx:afterSwap', (evt) => {
+    const t = evt.detail && evt.detail.target;
+    if (t && t.id === 'empresa-colaboradores-container') {
+      const m = document.getElementById('htmx-modal');
+      if (m && !m.classList.contains('hidden')) m.classList.add('hidden');
+    }
+  });
+</script>
+
+
+{% endblock %}

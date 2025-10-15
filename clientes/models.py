@@ -40,7 +40,7 @@ class Empresa(models.Model):
     colaboradores = models.ManyToManyField(Pessoa, related_name='empresa')
 
     def __str__(self):
-        return self.nome
+        return self.nome or f"Empresa #{self.pk}"
 
 class ClienteLicense(models.Model):
     """

@@ -1,0 +1,64 @@
+<div>
+  <h3 class="text-sm font-medium text-gray-900 mb-4">Colaboradores</h3>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Nome</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Cargo</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">E-mail</th>
+          <th class="px-4 py-2 text-right text-xs font-medium text-gray-500">Ações</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-100">
+        {% for pessoa in empresa.colaboradores.all %}
+        <tr>
+          <td class="px-4 py-3">
+            <div class="text-sm font-medium text-gray-900">{{ pessoa.nome }}</div>
+            <div class="text-xs text-gray-500">{{ pessoa.cidade }}</div>
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-900">{{ pessoa.cargo }}</td>
+          <td class="px-4 py-3 text-sm text-gray-500">
+            {% if pessoa.usuario and pessoa.usuario.email %}
+              {{ pessoa.usuario.email }}
+            {% else %}
+              <span class="text-gray-400 italic">—</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-right space-x-2">
+            <!-- Edit (abre formulário via HTMX no modal_target) -->
+            <button
+              hx-get="{% url 'clientes:empresa_edit_colaborador' empresa.pk pessoa.pk %}"
+              hx-target="#htmx-modal .modal-body"
+              hx-swap="innerHTML"
+              class="inline-flex items-center px-3 py-1.5 border rounded text-sm hover:bg-gray-50">
+              Editar
+            </button>
+
+            <!-- Permissões (vai para página de permissões) -->
+            <a href="{% url 'clientes:empresa_colaborador_permissoes' empresa.pk pessoa.pk %}"
+               class="inline-flex items-center px-3 py-1.5 border rounded text-sm hover:bg-gray-50">
+              Permissões
+            </a>
+
+            <!-- Remover: botão POST com confirmação JS -->
+            <button
+            hx-get="{% url 'clientes:empresa_remove_colaborador_confirm' empresa.pk pessoa.pk %}"
+            hx-target="#htmx-modal .modal-body"
+            hx-swap="innerHTML"
+            class="inline-flex items-center px-3 py-1.5 border rounded text-sm text-red-600 hover:bg-red-50">
+            Remover
+            </button>
+
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="px-4 py-3 text-sm text-gray-500" colspan="4">Nenhum colaborador cadastrado.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

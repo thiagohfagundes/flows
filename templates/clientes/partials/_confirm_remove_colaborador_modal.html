@@ -1,0 +1,62 @@
+<div id="confirm-remove-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50">
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-md relative">
+    <!-- Cabeçalho -->
+    <div class="flex justify-between items-center border-b px-6 py-4">
+      <h3 class="text-lg font-semibold text-gray-800">Confirmar remoção</h3>
+      <button 
+        type="button"
+        class="text-gray-400 hover:text-gray-600 transition"
+        onclick="document.getElementById('confirm-remove-modal').remove()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Corpo -->
+    <div class="px-6 py-5 space-y-4">
+      <p class="text-gray-700 leading-relaxed">
+        Você está prestes a <span class="font-semibold text-red-600">remover {{ pessoa.nome }}</span> 
+        dos colaboradores da empresa <span class="font-semibold">{{ empresa.nome }}</span>.
+      </p>
+      <p class="text-sm text-gray-500">
+        Para confirmar, digite o nome completo abaixo e clique em <strong>Remover</strong>.
+      </p>
+
+      <div>
+        <label for="confirm-name-input" class="block text-sm font-medium text-gray-700 mb-1">Nome para confirmar</label>
+        <input id="confirm-name-input" name="confirm_name" type="text"
+          class="w-full rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500"
+          placeholder="Digite o nome completo para confirmar">
+        <p class="mt-2 text-xs text-gray-500">Digite exatamente: <span class="font-semibold">{{ pessoa.nome }}</span></p>
+      </div>
+    </div>
+
+    <!-- Rodapé -->
+    <div class="flex justify-end gap-2 border-t px-6 py-4">
+      <button type="button" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+        onclick="document.getElementById('confirm-remove-modal').remove()">Cancelar</button>
+
+      <button id="confirm-remove-btn" type="submit"
+        class="px-4 py-2 bg-red-600 text-white rounded-lg disabled:opacity-50 hover:bg-red-700 transition"
+        disabled>Remover</button>
+    </div>
+  </div>
+</div>
+
+<!-- Script -->
+<script>
+    (function(){
+    const expected = "{{ pessoa.nome|escapejs }}";
+    const input = document.getElementById('confirm-name-input');
+    const btn = document.getElementById('confirm-remove-btn');
+    function check(){
+        if (!input) return;
+        btn.disabled = (input.value.trim() !== expected);
+    }
+    if (input){
+        input.addEventListener('input', check);
+        check();
+    }
+    })();
+</script>
